@@ -1,11 +1,13 @@
 import { msalConfig } from "@/authConfig";
 import Auth from "@/components/Auth";
+import { CustomNavigationClient } from "@/msNavigationClient";
 import { useStore } from "@/store";
 import { PageLayout } from "@/ui";
 import { EventType, PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import { Grid } from "@mui/material";
 import { NextIntlClientProvider } from "next-intl";
+import { useRouter } from "next/router";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Provider } from "react-redux";
@@ -27,6 +29,9 @@ msalInstance.addEventCallback((event: any) => {
 export default function App({ Component, pageProps }: any) {
   const store = useStore(pageProps.initialReduxState);
   const [queryClient] = React.useState(() => new QueryClient());
+  const router = useRouter();
+  const navigationClient = new CustomNavigationClient(router);
+  msalInstance.setNavigationClient(navigationClient);
 
   return (
     <NextIntlClientProvider

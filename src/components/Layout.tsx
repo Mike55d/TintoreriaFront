@@ -9,7 +9,7 @@ import Drawer from './navigation/Drawer';
 
 const Offset = styled('div')(({ theme }) => {
   // @ts-ignore
-  return theme.mixins.toolbar;
+  return theme.mixins?.toolbar;
 });
 
 const variants = {

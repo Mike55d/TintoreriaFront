@@ -25,6 +25,7 @@ export default function Auth({ children, auth }: AuthProps): JSX.Element {
     }
 
     const mstoken = window.localStorage.getItem("mstoken");
+    console.log(mstoken);
     const localTokenExists = !!window.localStorage.getItem("authToken");
     const darkModeConfig = window.localStorage.getItem("darkMode");
 
