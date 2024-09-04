@@ -1,0 +1,9 @@
+{
+  "app_title": "Tintoreria",
+  "microsoft_signin": "Inicio de session con microsoft",
+  "unable_to_get_access_from_3c_title": "Usuario inválido",
+  "unable_to_get_access_from_3c_details": "Verifique que usted ha sido registrado como un usuario dentro de este sistema",
+  "HomePage": {
+    "title": "Titulo"
+  }
+}

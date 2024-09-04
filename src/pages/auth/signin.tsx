@@ -1,4 +1,6 @@
-import Test from "@/features/test/Test";
+import Login from "@/features/login/Login";
+import { GetStaticProps } from "next";
+import React from "react";
 
 export async function getStaticProps() {
   const locale = "es";
@@ -7,19 +9,13 @@ export async function getStaticProps() {
     props: {
       // You can get the messages from anywhere you like. The recommended pattern
       // is to put them in JSON files separated by locale (e.g. `en.json`).
-      messages: (await import(`../../messages/${locale}.json`)).default,
+      messages: (await import(`../../../messages/${locale}.json`)).default,
     },
   };
 }
 
 function Page() {
-  return <Test />;
+  return <Login />;
 }
-
-Page.auth = {
-  modules: [],
-  loading: <div>Loading...</div>,
-  unauthorized: "/auth/signin",
-};
 
 export default Page;
