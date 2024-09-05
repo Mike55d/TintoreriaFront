@@ -19,6 +19,8 @@ import router from "next/router";
 import UserBasicData from "../UserBasicData";
 import NavItem, { NavItemProps } from "./NavItem";
 import { useTranslations } from "next-intl";
+import PeopleIcon from "@mui/icons-material/People";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 
 const drawerVariants = {
   hidden: { x: -DRAWER_WIDTH, zIndex: 9999, height: "100vh" },
@@ -38,7 +40,7 @@ export default function Drawer() {
       return (
         !item.permissions ||
         !item.permissions.length ||
-        user!.permissions.some((x) => item.permissions!.includes(x))
+        user!.permissions.some((x: any) => item.permissions!.includes(x))
       );
     });
     for (const item of newItems) {
@@ -57,14 +59,19 @@ export default function Drawer() {
     // Definiciones del menú lateral
     const rawDrawer: NavItemProps[] = [
       {
-        href: "/",
+        href: "/#",
         text: t("dashboard"),
         icon: DashboardIcon,
       },
       {
         href: "/clients",
         text: t("clients"),
-        icon: DashboardIcon,
+        icon: PeopleIcon,
+      },
+      {
+        href: "/companies",
+        text: t("companies"),
+        icon: ApartmentIcon,
       },
     ];
 
