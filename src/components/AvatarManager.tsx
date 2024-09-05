@@ -38,7 +38,7 @@ export interface AvatarManagerProps {
 }
 
 export default function AvatarManager(props: AvatarManagerProps) {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   const [currImgUrl, setCurrImgUrl] = useState(
     props.src as string | null | undefined
   );

@@ -25,7 +25,7 @@ export interface UserBasicDataProps {
 }
 
 export default function UserBasicData(props: UserBasicDataProps) {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   const router = useRouter();
 
   const { user } = useSelector((state: RootState) => state.app);

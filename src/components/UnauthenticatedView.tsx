@@ -7,7 +7,7 @@ import msIcon from '../../public/icons/microsoft.svg';
 import { useTranslations } from 'next-intl';
 
 export default function UnauthenticatedView() {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
 
   return (
     <Box sx={{ bgcolor: 'background.default', flex: 1, height: '100vh' }}>

@@ -23,7 +23,7 @@ export interface FileUploadBoxProps {
 }
 
 export default function FileUploadBox(props: FileUploadBoxProps) {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   let fileUploader = useRef<HTMLInputElement>(null);
 
   const handleAddFilesClick = () => {

@@ -27,7 +27,7 @@ const drawerVariants = {
 };
 
 export default function Drawer() {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   const { user } = useSelector((state: RootState) => state.app);
   const { mobileOpen } = useSelector((state: RootState) => state.app);
   const dispatch = useDispatch();
@@ -57,8 +57,13 @@ export default function Drawer() {
     // Definiciones del menú lateral
     const rawDrawer: NavItemProps[] = [
       {
-        href: "/dashboard",
+        href: "/",
         text: t("dashboard"),
+        icon: DashboardIcon,
+      },
+      {
+        href: "/clients",
+        text: t("clients"),
         icon: DashboardIcon,
       },
     ];

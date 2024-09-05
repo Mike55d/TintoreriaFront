@@ -36,7 +36,7 @@ export default function Layout({ children }: any) {
           animate='enter'
           exit='exit'
         >
-          <Box sx={{ bgcolor: 'background.default', p: 3 }}>
+          <Box sx={{ bgcolor: 'background.default', p: 3, marginTop:8 }}>
             <Offset />
             <Container maxWidth='xl' fixed>
               {children}

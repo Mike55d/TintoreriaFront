@@ -7,7 +7,7 @@ export interface FieldViewProps {
 }
 
 export default function FieldView(props: FieldViewProps) {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   return props.children ? (
     <Grid item xs={12} sm={6}>
       <Grid container>

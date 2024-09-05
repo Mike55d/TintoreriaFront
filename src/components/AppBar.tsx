@@ -35,7 +35,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import { useTranslations } from "next-intl";
 
 export default function AppBar() {
-  const t = useTranslations("HomePage");
+  const t = useTranslations();
   const { mobileOpen, user } = useSelector((state: RootState) => state.app);
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
