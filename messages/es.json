@@ -31,5 +31,7 @@
   "phone": "Teléfono",
   "companies": "Empresas",
   "company": "Empresa",
-  "company_data": "Datos de empresa"
+  "company_data": "Datos de empresa",
+  "postalCode":"Codigo postal",
+  "rfc":"Rfc"
 }

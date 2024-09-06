@@ -1,5 +1,6 @@
 import networkClient from "@/networkClient";
 import { GetClientsParams } from "./types";
+import Company from "@/features/companies/lib/api";
 
 const baseUrl = "api/clients";
 
@@ -12,6 +13,7 @@ export default class Client {
   country: string | null;
   postalCode: string;
   rfc: string;
+  companies: Company[];
 
   constructor() {
     this.id = null;
@@ -22,6 +24,7 @@ export default class Client {
     this.country = "";
     this.postalCode = "";
     this.rfc = "";
+    this.companies = [];
   }
 
   static async fetchAll(params: GetClientsParams) {
@@ -38,15 +41,18 @@ export default class Client {
   }
 
   static async create(record: Client) {
-    const { data } = await networkClient.post(`${baseUrl}`, record);
+    const { data } = await networkClient.post(`${baseUrl}`, {
+      ...record,
+      companies: record.companies.map((companie) => companie.id),
+    });
     return data;
   }
 
   static async update(record: Client) {
-    const { data } = await networkClient.patch(
-      `${baseUrl}/${record.id}`,
-      record
-    );
+    const { data } = await networkClient.patch(`${baseUrl}/${record.id}`, {
+      ...record,
+      companies: record.companies.map((companie) => companie.id),
+    });
     return data;
   }
 

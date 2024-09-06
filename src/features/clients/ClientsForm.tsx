@@ -32,6 +32,7 @@ import DialogTitle from "@/components/dialog/DialogTitle";
 import countries from "../../../public/countries.json";
 import { CountryType } from "./lib/types";
 import * as yup from "yup";
+import { useCompanies } from "../companies/lib/hooks/useCompanies";
 
 const useStyles = makeStyles({
   column: {
@@ -51,6 +52,7 @@ const CLientsForm = () => {
   const router = useRouter();
   const { id } = router.query;
   const classes = useStyles();
+  const { data: companies } = useCompanies();
   const clientQuery = useClient(id ? parseInt(id as string) : undefined);
   const [countrySearch, setCountrySearch] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<CountryType | null>(
@@ -72,6 +74,7 @@ const CLientsForm = () => {
     email: yup.string().max(64).email().required(t("required_field")),
     postalCode: yup.string().max(64).required(t("required_field")),
     rfc: yup.string().max(2000).required(t("required_field")),
+    companies:yup.array().nullable()
   });
 
   const mutationOptions = {
@@ -146,7 +149,7 @@ const CLientsForm = () => {
     }
   };
 
-  if(id && !clientQuery.data) return null;
+  if (id && !clientQuery.data) return null;
 
   return (
     <>
@@ -264,6 +267,29 @@ const CLientsForm = () => {
                         variant="standard"
                         name="phone"
                         label={t("phone")}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Autocomplete
+                        isOptionEqualToValue={(option: any, value: any) =>
+                          option.id == value.id
+                        }
+                        multiple
+                        disablePortal
+                        fullWidth
+                        options={companies?.data ?? []}
+                        getOptionLabel={(option) => option.name}
+                        value={values.companies}
+                        onChange={(_: any, newValue: any | null) => {
+                          setValues({ ...values, companies: newValue });
+                        }}
+                        renderInput={(params) => (
+                          <MUITextField
+                            {...params}
+                            label={t("companies")}
+                            variant="standard"
+                          />
+                        )}
                       />
                     </Grid>
                     <Grid item xs={6}>

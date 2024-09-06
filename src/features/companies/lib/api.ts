@@ -24,7 +24,7 @@ export default class Company {
     this.country = "";
   }
 
-  static async fetchAll(params: GetClientsParams) {
+  static async fetchAll(params?: GetClientsParams) {
     const { data } = await networkClient.get(baseUrl, {}, params);
     return data;
   }
