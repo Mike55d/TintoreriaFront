@@ -32,6 +32,19 @@
   "companies": "Empresas",
   "company": "Empresa",
   "company_data": "Datos de empresa",
-  "postalCode":"Codigo postal",
-  "rfc":"Rfc"
+  "postalCode": "Codigo postal",
+  "rfc": "Rfc",
+  "settings": "Menu de configuracion",
+  "garments": "Prendas",
+  "new_garment": "Nueva prenda",
+  "no_items_to_show": "No hay ítems para mostrar",
+  "save": "Guardar",
+  "code": "Código",
+  "sign": "Símbolo",
+  "currencies": "Monedas",
+  "price": "Precio",
+  "type": "Tipo",
+  "create": "Crear",
+  "new_currency": "Nueva divisa",
+  "id": "Id"
 }

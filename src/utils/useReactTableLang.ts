@@ -1,11 +1,12 @@
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 
 export default function useReactTableLang() {
-  const { t } = useTranslation();
+  const t = useTranslations();
+
   return useMemo(
     () => ({
-      noItemsToShow: t("no_items_to_show")
+      noItemsToShow: t("no_items_to_show"),
     }),
     [t]
   );
