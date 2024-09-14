@@ -3,6 +3,7 @@ import { Price } from "./types";
 
 const baseUrl = "api/garments";
 const baseUrlCurrencies = "api/currencies";
+const baseUrlGeneralPrices = "api/settings";
 
 export class Garment {
   id?: string | null;
@@ -90,6 +91,30 @@ export class Currency {
     const { data } = await networkClient.delete(
       `${baseUrlCurrencies}/${record.id}`
     );
+    return data;
+  }
+}
+
+export class GeneralPrice {
+  id?: number | null;
+  ironing_discount: number | null;
+  general_price: number | null;
+  currencyId: number | null;
+
+  constructor() {
+    this.id = null;
+    this.ironing_discount = null;
+    this.general_price = null;
+    this.currencyId = null;
+  }
+
+  static async fetchAll() {
+    const { data } = await networkClient.get(baseUrlGeneralPrices, {});
+    return data;
+  }
+
+  static async create(record: GeneralPrice) {
+    const { data } = await networkClient.post(`${baseUrlGeneralPrices}`, record);
     return data;
   }
 }

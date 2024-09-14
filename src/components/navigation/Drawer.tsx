@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 import PeopleIcon from "@mui/icons-material/People";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import SettingsIcon from "@mui/icons-material/Settings";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 
 const drawerVariants = {
   hidden: { x: -DRAWER_WIDTH, zIndex: 9999, height: "100vh" },
@@ -78,6 +79,11 @@ export default function Drawer() {
         href: "/settings",
         text: t("settings"),
         icon: SettingsIcon,
+      },
+      {
+        href: "/orders",
+        text: t("orders"),
+        icon: ReceiptIcon,
       },
     ];
 

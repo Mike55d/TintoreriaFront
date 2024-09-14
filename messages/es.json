@@ -46,5 +46,19 @@
   "type": "Tipo",
   "create": "Crear",
   "new_currency": "Nueva divisa",
-  "id": "Id"
+  "id": "Id",
+  "percent": "Porcentaje",
+  "general_prices": "Precios generales",
+  "ironing_discount": "Descuento de planchado",
+  "general_price": "Precio general",
+  "orders": "Pedidos",
+  "order": "Pedido",
+  "received": "Recibido",
+  "processing": "Procesado",
+  "ready": "Listo para entregar",
+  "date": "Fecha",
+  "Status": "Estado",
+  "currency": "Moneda",
+  "quantity": "Cantidad",
+  "ironing_only": "Solo planchado"
 }

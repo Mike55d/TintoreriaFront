@@ -90,19 +90,15 @@ const Currencies = () => {
   const columns = useMemo(
     () => [
       {
-        Header: t("id"),
+        Header: t("name"),
         accessor: (row: Currency) => (
           <MuiLink
             sx={{ cursor: "pointer" }}
             onClick={() => handleCurrencyClick(row)}
           >
-            {row.id}
+            {row.name}
           </MuiLink>
         ),
-      },
-      {
-        Header: t("name"),
-        accessor: "name",
       },
       {
         Header: t("code"),

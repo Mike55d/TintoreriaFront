@@ -18,11 +18,9 @@ import {
 } from "@mui/material";
 import { GridCloseIcon } from "@mui/x-data-grid";
 import { Field, FieldProps, Formik, FormikHelpers } from "formik";
-import ControlPointIcon from "@mui/icons-material/ControlPoint";
 import { TextField } from "formik-mui";
 import { useTranslations } from "next-intl";
 import useReactTableLang from "@/utils/useReactTableLang";
-import CloseIcon from "@mui/icons-material/Close";
 import useGarments from "./lib/hooks/useGarments";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
@@ -109,17 +107,6 @@ const Garments = () => {
     ],
     [t] // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  const types = [
-    {
-      text: "percent",
-      value: 0,
-    },
-    {
-      text: "price",
-      value: 1,
-    },
-  ];
 
   const handleSubmit = async (
     values: Garment,
@@ -223,7 +210,12 @@ const Garments = () => {
                     );
                     return price
                       ? { ...price, currencyId: currency.id as number }
-                      : { currencyId: currency.id as number, price: undefined };
+                      : {
+                          currency,
+                          currencyId: currency.id as number,
+                          price: undefined,
+                          type: 1,
+                        };
                   });
                   setValues({ ...currentRecord, prices: prices ?? [] });
                 }
@@ -259,7 +251,7 @@ const Garments = () => {
                       />
                     </Grid>
                     {values.prices?.map((price, i) => (
-                      <Grid container xs={12} key={i} spacing={2}>
+                      <Grid container xs={12} key={i}>
                         <Grid item xs={12} sm={6}>
                           <Field
                             fullWidth
@@ -267,17 +259,20 @@ const Garments = () => {
                             component={NumericField}
                             variant="standard"
                             name={`prices[${i}].price`}
-                            label={t("price")}
+                            label={`${t("price")} ${price.currency?.name}`}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={3}>
+                        <Grid item xs={12} sm={.8}>
                           <FormikSelectField
-                            label={t("type")}
+                            // label={t("type")}
                             variant="standard"
                             name={`prices[${i}].type`}
                             id="type"
                             hideDefault
-                            values={types}
+                            values={[
+                              { text: "%", value: 0 },
+                              { text: price.currency?.sign, value: 1 },
+                            ]}
                           />
                         </Grid>
                       </Grid>
