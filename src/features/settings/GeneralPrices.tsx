@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { CTError } from "@/utils/errors";
 import useGeneralPrices from "./lib/hooks/useGeneralPrices";
 import { TextField } from "formik-mui";
+import PricesModal from "./PricesModal";
 
 const GeneralPrices = () => {
   const t = useTranslations();
@@ -53,7 +54,6 @@ const GeneralPrices = () => {
     postMutation.mutate(values, {
       onSuccess: (result: GeneralPrice) => {
         generalPrices.refetch();
-        setDialogOpen(false);
         setSnackbarMessage(t("success_add_record"));
       },
       onError: (e: CTError) => {
@@ -70,7 +70,7 @@ const GeneralPrices = () => {
         <Grid item xs={12}>
           <Stack direction={"row"}>
             <Grid item xs>
-              <Typography variant="h6">{t("general_prices")}</Typography>
+              <Typography variant="h6">{t("prices")}</Typography>
             </Grid>
           </Stack>
         </Grid>
@@ -107,7 +107,7 @@ const GeneralPrices = () => {
                       component={TextField}
                       variant="standard"
                       name={"ironing_discount"}
-                      label={t("ironing_discount")+' %'}
+                      label={t("ironing_discount") + " %"}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -129,7 +129,7 @@ const GeneralPrices = () => {
                   justifyContent={"flex-end"}
                   mt={2}
                 >
-                  <Grid item ml={1}>
+                  {/* <Grid item ml={1}>
                     <Button
                       variant="contained"
                       color="primary"
@@ -139,7 +139,14 @@ const GeneralPrices = () => {
                     >
                       {t("update")}
                     </Button>
-                  </Grid>
+                  </Grid> */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setDialogOpen(true)}
+                  >
+                    {t("edit")}
+                  </Button>
                 </Grid>
               </>
             );
@@ -150,6 +157,7 @@ const GeneralPrices = () => {
           <Alert severity={snackbarType}>{snackbarText}</Alert>
         </Snackbar>
       </Grid>
+      <PricesModal dialogOpen={dialogOpen} setDialogOpen={setDialogOpen} />
     </>
   );
 };

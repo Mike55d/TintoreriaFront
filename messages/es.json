@@ -60,5 +60,8 @@
   "Status": "Estado",
   "currency": "Moneda",
   "quantity": "Cantidad",
-  "ironing_only": "Solo planchado"
+  "ironing_only": "Solo planchado",
+  "prices": "Precios",
+  "edit": "Editar",
+  "search": "Buscar"
 }

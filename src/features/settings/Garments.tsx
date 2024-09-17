@@ -27,7 +27,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { CTError } from "@/utils/errors";
 import { Garment } from "./lib/api";
 import useCurrencies from "./lib/hooks/useCurrencies";
-import FormikSelectField from "@/components/formik-fields/FormikSelect";
+// import FormikSelectField from "@/components/formik-fields/FormikSelect";
 
 const NumericField = (props: FieldProps<any>) => (
   <TextField {...props} type="number" />
@@ -181,7 +181,7 @@ const Garments = () => {
         <ReactTable
           columns={columns}
           data={garments.data ?? []}
-          options={{ filtering: false, paging: false }}
+          options={{ filtering: true, paging: true }}
           lang={reactTableLang}
         />
         <Grid item xs={12} marginRight={1}></Grid>
@@ -250,7 +250,7 @@ const Garments = () => {
                         label={t("name")}
                       />
                     </Grid>
-                    {values.prices?.map((price, i) => (
+                    {/* {values.prices?.map((price, i) => (
                       <Grid container xs={12} key={i}>
                         <Grid item xs={12} sm={6}>
                           <Field
@@ -276,7 +276,7 @@ const Garments = () => {
                           />
                         </Grid>
                       </Grid>
-                    ))}
+                    ))} */}
                   </Grid>
                 </DialogContent>
                 <DialogActions>

@@ -225,7 +225,7 @@ const Currencies = () => {
                   <GridCloseIcon />
                 </IconButton>
                 <DialogContent dividers>
-                  <Grid container>
+                  <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <Field
                         fullWidth
@@ -236,7 +236,7 @@ const Currencies = () => {
                         label={t("name")}
                       />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sm={6}>
                       <Field
                         fullWidth
                         autoComplete="off"
@@ -246,7 +246,7 @@ const Currencies = () => {
                         label={t("code")}
                       />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sm={6}>
                       <Field
                         fullWidth
                         autoComplete="off"
