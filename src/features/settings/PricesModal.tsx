@@ -10,12 +10,19 @@ import {
   IconButton,
   Paper,
   TextField as MuiTextField,
+  FormHelperText,
+  Autocomplete,
 } from "@mui/material";
 import { DataGrid, GridCloseIcon, GridColDef } from "@mui/x-data-grid";
 import { Field, Form, Formik, FormikHelpers } from "formik";
 import { TextField } from "formik-mui";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
+import useCurrencies from "./lib/hooks/useCurrencies";
+import { Currency } from "./lib/api";
+import useGeneralPrices from "./lib/hooks/useGeneralPrices";
+import SelectInputGrid from "./lib/components/SelectInputGrid";
+import { GarmentWithPrice } from "./lib/types";
 
 type PricesModalProps = {
   dialogOpen: boolean;
@@ -28,38 +35,45 @@ const PricesModal: React.FC<PricesModalProps> = ({
 }) => {
   const t = useTranslations();
   const [searchText, setSearchText] = React.useState("");
-  const [rows, setRows] = React.useState([
-    { id: 1, garment: "camisa", price: 120, type: 1 },
-    { id: 2, garment: "pantalón", price: 80, type: 2 },
-    { id: 3, garment: "chaqueta", price: 150, type: 1 },
-    { id: 4, garment: "falda", price: 60, type: 2 },
-    { id: 5, garment: "abrigo", price: 200, type: 1 },
-    { id: 6, garment: "sombrero", price: 40, type: 3 },
-    { id: 7, garment: "bufanda", price: 30, type: 3 },
-    { id: 8, garment: "guantes", price: 25, type: 3 },
-  ]);
+  const { data: currencies } = useCurrencies();
+  const [selectedCurency, setSelectedCurency] = useState<Currency | null>(null);
+  const { data: generalPrices } = useGeneralPrices(selectedCurency?.id ?? 0);
+  const [rows, setRows] = React.useState<GarmentWithPrice[]>([]);
+  const [editedRows, setEditedRows] = React.useState<GarmentWithPrice[]>([]);
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 150 },
+    { field: "id", headerName: t("id"), width: 150 },
     {
-      field: "garment",
-      headerName: "Garment",
-      width: 200,
+      field: "name",
+      headerName: t("name"),
+      width: 320,
       editable: false,
     },
     {
       field: "price",
-      headerName: "Price",
+      headerName: t("price"),
       type: "number",
       width: 200,
       editable: true,
     },
     {
       field: "type",
-      headerName: "Type",
+      headerName: t("type"),
       type: "number",
-      width: 200,
+      width: 100,
       editable: true,
+      renderEditCell: (params) => (
+        <SelectInputGrid props={params} selectedCurrency={selectedCurency} />
+      ),
+      renderCell: (params) => (
+        <>
+          {params.row.type != null
+            ? params.row.type == 0
+              ? "%"
+              : selectedCurency?.code
+            : null}
+        </>
+      ),
     },
   ];
 
@@ -68,6 +82,16 @@ const PricesModal: React.FC<PricesModalProps> = ({
       row.id === newRow.id ? { ...row, ...newRow } : row
     );
     setRows(updatedRows);
+    let newEditRows = editedRows;
+    const index = editedRows.findIndex(
+      (row) => row.currencyId == selectedCurency?.id && row.id == newRow.id
+    );
+    if (index != -1) {
+      newEditRows[index] = { ...newEditRows[index], ...newRow };
+    } else {
+      newEditRows.push(newRow);
+    }
+    setEditedRows(newEditRows);
     return newRow;
   };
 
@@ -77,8 +101,8 @@ const PricesModal: React.FC<PricesModalProps> = ({
 
   const handleSubmit = (values: any, actions: FormikHelpers<any>) => {
     actions.setSubmitting(false);
-    console.log(rows);
     console.log(values);
+    console.log(editedRows);
   };
 
   const filteredRows = rows.filter((row) =>
@@ -89,9 +113,39 @@ const PricesModal: React.FC<PricesModalProps> = ({
     )
   );
 
+  useEffect(() => {
+    if (generalPrices?.garmentsWithPrice?.length) {
+      const editedRowsCurrency = editedRows.filter(
+        (row) => row.currencyId == selectedCurency?.id
+      );
+      if (editedRowsCurrency.length) {
+        const newRows = generalPrices.garmentsWithPrice.map(
+          (garmentWithPrice) => {
+            const editedValue = editedRowsCurrency.find(
+              (editedRow) => editedRow.id == garmentWithPrice.id
+            );
+            return editedValue ?? garmentWithPrice;
+          }
+        );
+        setRows(newRows);
+      } else {
+        setRows(generalPrices.garmentsWithPrice);
+      }
+    }
+  }, [generalPrices]);
+
+  // useEffect(() => {
+  //   console.log(selectedCurency);
+  // }, [selectedCurency]);
+
   return (
     <>
-      <Dialog maxWidth="md" onClose={handleDialogClose} open={dialogOpen} fullWidth>
+      <Dialog
+        maxWidth="md"
+        onClose={handleDialogClose}
+        open={dialogOpen}
+        fullWidth
+      >
         <DialogTitle sx={{ m: 0, p: 2 }}>{t("prices")}</DialogTitle>
         <IconButton
           onClick={handleDialogClose}
@@ -105,7 +159,7 @@ const PricesModal: React.FC<PricesModalProps> = ({
           <GridCloseIcon />
         </IconButton>
         <DialogContent dividers>
-          <Formik initialValues={{}} onSubmit={handleSubmit}>
+          <Formik initialValues={{ currencyId: null }} onSubmit={handleSubmit}>
             {({
               values,
               isSubmitting,
@@ -126,55 +180,91 @@ const PricesModal: React.FC<PricesModalProps> = ({
               return (
                 <>
                   <Form id="pricesForm">
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Field
-                          fullWidth
-                          autocomplete="off"
-                          component={TextField}
-                          variant="standard"
-                          name={"ironing_discount"}
-                          label={t("ironing_discount") + " %"}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Field
-                          fullWidth
-                          autocomplete="off"
-                          component={TextField}
-                          variant="standard"
-                          name={"general_price"}
-                          label={t("general_price")}
-                        />
-                      </Grid>
-                    </Grid>
-                    <Box
-                      sx={{
-                        height: 400,
-                        width: "100%",
-                        marginTop: 1,
-                      }}
+                    <Grid
+                      container
+                      spacing={2}
+                      component={Paper}
+                      padding={2}
+                      mt={1}
                     >
-                      <Grid xs={12} sm={6} mb={3}>
-                        <MuiTextField
-                          label={t("search")}
-                          variant="standard"
+                      <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                        <Autocomplete
+                          isOptionEqualToValue={(option: any, value: any) =>
+                            option.id == value.id
+                          }
+                          disablePortal
                           fullWidth
-                          onChange={(e) => setSearchText(e.target.value)}
-                          value={searchText}
-                          />
+                          options={currencies ?? []}
+                          getOptionLabel={(option) => (option as Currency).code}
+                          value={selectedCurency}
+                          onChange={(_: any, newValue: any | null) => {
+                            setSelectedCurency(newValue);
+                          }}
+                          renderInput={(params) => (
+                            <MuiTextField
+                              {...params}
+                              label={t("currency")}
+                              variant="standard"
+                            />
+                          )}
+                        />
+                        {/* <FormHelperText sx={{ color: "red" }}>
+                          {!!touched["alertTitle"] && errors["alertTitle"]}
+                        </FormHelperText> */}
+                      </Grid>
+                      {selectedCurency && (
+                        <>
+                          <Grid item xs={12} sm={6}>
+                            <Field
+                              fullWidth
+                              autocomplete="off"
+                              component={TextField}
+                              variant="standard"
+                              name={"general_price"}
+                              label={t("general_price")}
+                            />
                           </Grid>
-                      <DataGrid
-                        rows={filteredRows}
-                        columns={columns}
-                        processRowUpdate={handleProcessRowUpdate}
-                        pagination
-                        pageSizeOptions={[10, 25, 50]}
-                        // disableColumnFilter
-                        disableColumnMenu
-                        disableRowSelectionOnClick
-                      />
-                    </Box>
+                          <Grid item xs={12} sm={6}>
+                            <Field
+                              fullWidth
+                              autocomplete="off"
+                              component={TextField}
+                              variant="standard"
+                              name={"ironing_discount"}
+                              label={t("ironing_discount")}
+                            />
+                          </Grid>
+                        </>
+                      )}
+                    </Grid>
+                    {selectedCurency && (
+                      <Box
+                        sx={{
+                          height: 400,
+                          width: "100%",
+                          marginTop: 1,
+                        }}
+                      >
+                        <Grid xs={12} sm={6} mb={3}>
+                          <MuiTextField
+                            label={t("search")}
+                            variant="standard"
+                            fullWidth
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
+                          />
+                        </Grid>
+                        <DataGrid
+                          rows={filteredRows}
+                          columns={columns}
+                          processRowUpdate={handleProcessRowUpdate}
+                          pagination
+                          pageSizeOptions={[10, 25, 50]}
+                          disableColumnMenu
+                          disableRowSelectionOnClick
+                        />
+                      </Box>
+                    )}
                   </Form>
                 </>
               );

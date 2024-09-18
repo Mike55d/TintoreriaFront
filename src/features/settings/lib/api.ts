@@ -1,9 +1,8 @@
 import networkClient from "@/networkClient";
-import { Price } from "./types";
+import { GarmentWithPrice, GeneralPriceForm, Price } from "./types";
 
 const baseUrl = "api/garments";
 const baseUrlCurrencies = "api/currencies";
-const baseUrlGeneralPrices = "api/settings";
 
 export class Garment {
   id?: string | null;
@@ -95,26 +94,33 @@ export class Currency {
   }
 }
 
+const baseUrlGeneralPrices = "api/general-prices";
+
 export class GeneralPrice {
   id?: number | null;
-  ironing_discount: number | null;
-  general_price: number | null;
-  currencyId: number | null;
+  generalPrice: any;
+  garmentsWithPrice: GarmentWithPrice[];
 
   constructor() {
     this.id = null;
-    this.ironing_discount = null;
-    this.general_price = null;
-    this.currencyId = null;
+    this.generalPrice = {};
+    this.garmentsWithPrice = [];
   }
 
-  static async fetchAll() {
-    const { data } = await networkClient.get(baseUrlGeneralPrices, {});
+  static async fetchAll(currencyId: number | null) {
+    if (!currencyId) return new GeneralPrice();
+    const { data } = await networkClient.get(
+      `${baseUrlGeneralPrices}/${currencyId}`,
+      {}
+    );
     return data;
   }
 
-  static async create(record: GeneralPrice) {
-    const { data } = await networkClient.post(`${baseUrlGeneralPrices}`, record);
+  static async create(record: GeneralPriceForm) {
+    const { data } = await networkClient.post(
+      `${baseUrlGeneralPrices}`,
+      record
+    );
     return data;
   }
 }
