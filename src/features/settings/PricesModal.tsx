@@ -34,6 +34,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { CTError, getMessageFromError, SimpleError } from "@/utils/errors";
 import { DialogConfig } from "@/utils/types";
 import { v4 as uuid } from "uuid";
+import useSettings from "./lib/hooks/useSettings";
 
 type PricesModalProps = {
   dialogOpen: boolean;
@@ -52,6 +53,7 @@ const PricesModal: React.FC<PricesModalProps> = ({
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = React.useState("");
   const { data: currencies } = useCurrencies();
+  const { data: settings } = useSettings();
   const [selectedCurency, setSelectedCurency] = useState<Currency | null>(null);
   const {
     data: generalPrices,
@@ -112,6 +114,15 @@ const PricesModal: React.FC<PricesModalProps> = ({
     (u: GeneralPriceForm) => GeneralPrice.create(u),
     mutationOptions
   );
+
+  useEffect(() => {
+    const preferedCurrency = currencies?.find(
+      (currency) => currency.id == settings?.currencyId
+    );
+    if (preferedCurrency) {
+      setSelectedCurency(preferedCurrency);
+    }
+  }, [currencies, settings]);
 
   const initialValues: GeneralPriceType = {
     currencyId: null,

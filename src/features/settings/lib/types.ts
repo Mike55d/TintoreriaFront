@@ -36,3 +36,7 @@ export type GeneralPriceType = {
   generalPrice: number | null;
   ironingDiscount: number | null;
 };
+
+export type SettingsType = {
+  currencyId?:number;
+}

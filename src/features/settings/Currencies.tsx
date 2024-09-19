@@ -15,6 +15,7 @@ import {
   Typography,
   Link as MuiLink,
   AlertColor,
+  Radio,
 } from "@mui/material";
 import { GridCloseIcon } from "@mui/x-data-grid";
 import { Field, Formik, FormikHelpers } from "formik";
@@ -26,7 +27,9 @@ import { useMutation, useQueryClient } from "react-query";
 import { CTError } from "@/utils/errors";
 import useCurrencies from "./lib/hooks/useCurrencies";
 import * as yup from "yup";
-import { Currency } from "./lib/api";
+import { Currency, Settings } from "./lib/api";
+import { SettingsType } from "./lib/types";
+import useSettings from "./lib/hooks/useSettings";
 
 const Currencies = () => {
   const t = useTranslations();
@@ -37,10 +40,16 @@ const Currencies = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarText, setSnackbarText] = useState("");
   const [snackbarType, setSnackbarType] = useState<AlertColor>("success");
+  const [selectedCurrency, setSelectedCurrency] = useState<number | null>(null);
   const currencies = useCurrencies();
+  const { data: settings } = useSettings();
 
   const mutationOptions = {
     onSuccess: () => queryClient.invalidateQueries("currencies"),
+  };
+
+  const mutationSettingsOptions = {
+    onSuccess: () => queryClient.invalidateQueries("settings"),
   };
 
   const handleCurrencyClick = (currency: Currency) => {
@@ -60,6 +69,11 @@ const Currencies = () => {
   const postMutation = useMutation<Currency, CTError, Currency>(
     (u: Currency) => Currency.create(u),
     mutationOptions
+  );
+
+  const postSettingsMutation = useMutation<Settings, CTError, SettingsType>(
+    (u: SettingsType) => Settings.create(u),
+    mutationSettingsOptions
   );
 
   const patchMutation = useMutation<Currency, CTError, Currency>(
@@ -87,6 +101,21 @@ const Currencies = () => {
     sign: yup.string().max(1).required(t("required_field")),
   });
 
+  const handleChangeCurrency = (newCurrencyId: number) => {
+    setSelectedCurrency(newCurrencyId);
+    postSettingsMutation.mutate(
+      { currencyId: newCurrencyId },
+      {
+        onSuccess: (result: Settings) => {
+          currencies.refetch();
+        },
+        onError: (e: CTError) => {
+          setSnackbarMessage(t("error_update_record"), "error");
+        },
+      }
+    );
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -108,9 +137,24 @@ const Currencies = () => {
         Header: t("sign"),
         accessor: "sign",
       },
+      {
+        Header: t("preferred_currency"),
+        accessor: (row: Currency) => (
+          <Radio
+            checked={selectedCurrency == row.id}
+            onChange={() => handleChangeCurrency(row.id ?? 0)}
+          />
+        ),
+      },
     ],
-    [t] // eslint-disable-line react-hooks/exhaustive-deps
+    [t, selectedCurrency] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  useEffect(() => {
+    if (settings?.currencyId) {
+      setSelectedCurrency(settings?.currencyId);
+    }
+  }, [settings]);
 
   const handleSubmit = async (
     values: Currency,

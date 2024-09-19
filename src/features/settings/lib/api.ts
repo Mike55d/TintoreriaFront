@@ -4,6 +4,7 @@ import {
   GeneralPriceForm,
   GeneralPriceType,
   Price,
+  SettingsType,
 } from "./types";
 
 const baseUrl = "api/garments";
@@ -129,6 +130,29 @@ export class GeneralPrice {
     const { data } = await networkClient.post(`${baseUrlGeneralPrices}`, {
       ...record,
       garmentsWithPrice: formatGarments,
+    });
+    return data;
+  }
+}
+
+const baseUrlSettings = "api/settings";
+
+export class Settings {
+  id?: number | null;
+  currencyId?: number;
+
+  constructor() {
+    this.id = null;
+  }
+
+  static async fetchAll() {
+    const { data } = await networkClient.get(baseUrlSettings, {});
+    return data;
+  }
+
+  static async create(record: SettingsType) {
+    const { data } = await networkClient.post(baseUrlSettings, {
+      ...record,
     });
     return data;
   }

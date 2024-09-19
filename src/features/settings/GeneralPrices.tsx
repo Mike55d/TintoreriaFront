@@ -1,51 +1,11 @@
-import { Field, Formik, FormikHelpers } from "formik";
-import { useEffect, useState } from "react";
-import { GeneralPrice } from "./lib/api";
-import {
-  Alert,
-  AlertColor,
-  Button,
-  Divider,
-  Grid,
-  LinearProgress,
-  Paper,
-  Snackbar,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { useState } from "react";
+import { Button, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
 import { useTranslations } from "next-intl";
-import { useMutation, useQueryClient } from "react-query";
-import { CTError } from "@/utils/errors";
-import useGeneralPrices from "./lib/hooks/useGeneralPrices";
-import { TextField } from "formik-mui";
 import PricesModal from "./PricesModal";
-import { GeneralPriceForm } from "./lib/types";
 
 const GeneralPrices = () => {
   const t = useTranslations();
-  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarText, setSnackbarText] = useState("");
-  const [snackbarType, setSnackbarType] = useState<AlertColor>("success");
-
-  const mutationOptions = {
-    onSuccess: () => queryClient.invalidateQueries("garments"),
-  };
-
-  const setSnackbarMessage = (
-    message: string,
-    type: AlertColor = "success"
-  ) => {
-    setSnackbarType(type);
-    setSnackbarText(message);
-    setSnackbarOpen(true);
-  };
-
-  const postMutation = useMutation<GeneralPrice, CTError, GeneralPriceForm>(
-    (u: GeneralPriceForm) => GeneralPrice.create(u),
-    mutationOptions
-  );
 
   return (
     <>
@@ -67,9 +27,6 @@ const GeneralPrices = () => {
             {t("edit")}
           </Button>
         </Grid>
-        <Snackbar open={snackbarOpen} autoHideDuration={3000}>
-          <Alert severity={snackbarType}>{snackbarText}</Alert>
-        </Snackbar>
       </Grid>
       <PricesModal dialogOpen={dialogOpen} setDialogOpen={setDialogOpen} />
     </>

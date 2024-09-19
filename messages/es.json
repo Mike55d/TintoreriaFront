@@ -41,7 +41,7 @@
   "save": "Guardar",
   "code": "Código",
   "sign": "Símbolo",
-  "currencies": "Monedas",
+  "currencies": "Divisas",
   "price": "Precio",
   "type": "Tipo",
   "create": "Crear",
@@ -63,5 +63,6 @@
   "ironing_only": "Solo planchado",
   "prices": "Precios",
   "edit": "Editar",
-  "search": "Buscar"
+  "search": "Buscar",
+  "preferred_currency":"Divisa preferida"
 }
