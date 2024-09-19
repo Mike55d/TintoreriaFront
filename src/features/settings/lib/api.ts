@@ -1,5 +1,10 @@
 import networkClient from "@/networkClient";
-import { GarmentWithPrice, GeneralPriceForm, Price } from "./types";
+import {
+  GarmentWithPrice,
+  GeneralPriceForm,
+  GeneralPriceType,
+  Price,
+} from "./types";
 
 const baseUrl = "api/garments";
 const baseUrlCurrencies = "api/currencies";
@@ -98,12 +103,12 @@ const baseUrlGeneralPrices = "api/general-prices";
 
 export class GeneralPrice {
   id?: number | null;
-  generalPrice: any;
+  generalPrice: GeneralPriceType;
   garmentsWithPrice: GarmentWithPrice[];
 
   constructor() {
     this.id = null;
-    this.generalPrice = {};
+    this.generalPrice = {} as GeneralPriceType;
     this.garmentsWithPrice = [];
   }
 
@@ -117,10 +122,14 @@ export class GeneralPrice {
   }
 
   static async create(record: GeneralPriceForm) {
-    const { data } = await networkClient.post(
-      `${baseUrlGeneralPrices}`,
-      record
-    );
+    const formatGarments = record.garmentsWithPrice.map((garment) => ({
+      ...garment,
+      id: typeof garment.id === "string" ? undefined : garment.id,
+    }));
+    const { data } = await networkClient.post(`${baseUrlGeneralPrices}`, {
+      ...record,
+      garmentsWithPrice: formatGarments,
+    });
     return data;
   }
 }

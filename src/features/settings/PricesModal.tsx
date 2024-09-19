@@ -12,37 +12,68 @@ import {
   TextField as MuiTextField,
   FormHelperText,
   Autocomplete,
+  Backdrop,
+  CircularProgress,
+  DialogContentText,
 } from "@mui/material";
 import { DataGrid, GridCloseIcon, GridColDef } from "@mui/x-data-grid";
-import { Field, Form, Formik, FormikHelpers } from "formik";
+import { Field, FieldProps, Form, Formik, FormikHelpers } from "formik";
 import { TextField } from "formik-mui";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import useCurrencies from "./lib/hooks/useCurrencies";
-import { Currency } from "./lib/api";
+import { Currency, GeneralPrice } from "./lib/api";
 import useGeneralPrices from "./lib/hooks/useGeneralPrices";
 import SelectInputGrid from "./lib/components/SelectInputGrid";
-import { GarmentWithPrice } from "./lib/types";
+import {
+  GarmentWithPrice,
+  GeneralPriceForm,
+  GeneralPriceType,
+} from "./lib/types";
+import { useMutation, useQueryClient } from "react-query";
+import { CTError, getMessageFromError, SimpleError } from "@/utils/errors";
+import { DialogConfig } from "@/utils/types";
+import { v4 as uuid } from "uuid";
 
 type PricesModalProps = {
   dialogOpen: boolean;
   setDialogOpen: (val: boolean) => void;
 };
 
+const NumericField = (props: FieldProps<any>) => (
+  <TextField {...props} type="number" />
+);
+
 const PricesModal: React.FC<PricesModalProps> = ({
   dialogOpen,
   setDialogOpen,
 }) => {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [searchText, setSearchText] = React.useState("");
   const { data: currencies } = useCurrencies();
   const [selectedCurency, setSelectedCurency] = useState<Currency | null>(null);
-  const { data: generalPrices } = useGeneralPrices(selectedCurency?.id ?? 0);
+  const {
+    data: generalPrices,
+    isLoading: isLoadingPrices,
+    refetch: refetchPrices,
+  } = useGeneralPrices(selectedCurency?.id ?? 0);
   const [rows, setRows] = React.useState<GarmentWithPrice[]>([]);
   const [editedRows, setEditedRows] = React.useState<GarmentWithPrice[]>([]);
+  const [editedGeneralPrices, setEditedGeneralPrices] = React.useState<
+    GeneralPriceType[]
+  >([]);
+  const [mutationError, setMutationError] = useState(null as SimpleError);
+  const [dialogConfig, setDialogConfig] = useState({
+    open: false,
+  } as DialogConfig);
+
+  const mutationOptions = {
+    onSuccess: () => queryClient.invalidateQueries("generalPrices"),
+  };
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: t("id"), width: 150 },
+    { field: "garmentId", headerName: t("id"), width: 150 },
     {
       field: "name",
       headerName: t("name"),
@@ -77,6 +108,17 @@ const PricesModal: React.FC<PricesModalProps> = ({
     },
   ];
 
+  const postMutation = useMutation<GeneralPrice, CTError, GeneralPriceForm>(
+    (u: GeneralPriceForm) => GeneralPrice.create(u),
+    mutationOptions
+  );
+
+  const initialValues: GeneralPriceType = {
+    currencyId: null,
+    generalPrice: null,
+    ironingDiscount: null,
+  };
+
   const handleProcessRowUpdate = (newRow: any) => {
     const updatedRows = rows.map((row) =>
       row.id === newRow.id ? { ...row, ...newRow } : row
@@ -87,9 +129,13 @@ const PricesModal: React.FC<PricesModalProps> = ({
       (row) => row.currencyId == selectedCurency?.id && row.id == newRow.id
     );
     if (index != -1) {
-      newEditRows[index] = { ...newEditRows[index], ...newRow };
+      newEditRows[index] = {
+        ...newEditRows[index],
+        ...newRow,
+        currencyId: selectedCurency?.id,
+      };
     } else {
-      newEditRows.push(newRow);
+      newEditRows.push({ ...newRow, currencyId: selectedCurency?.id });
     }
     setEditedRows(newEditRows);
     return newRow;
@@ -100,9 +146,52 @@ const PricesModal: React.FC<PricesModalProps> = ({
   };
 
   const handleSubmit = (values: any, actions: FormikHelpers<any>) => {
-    actions.setSubmitting(false);
-    console.log(values);
-    console.log(editedRows);
+    // actions.setSubmitting(false);
+    // console.log(editedRows);
+    // return;
+    const newEditedGeneralPrices = editedGeneralPrices;
+    if (values.generalPrice || values.ironingDiscount) {
+      const index = newEditedGeneralPrices.findIndex(
+        (genPrice) => genPrice.currencyId == selectedCurency?.id
+      );
+      if (index != -1) {
+        newEditedGeneralPrices[index].generalPrice = values.generalPrice;
+        newEditedGeneralPrices[index].ironingDiscount = values.ironingDiscount;
+      } else {
+        newEditedGeneralPrices.push({
+          id: values.id,
+          currencyId: selectedCurency?.id ?? 0,
+          generalPrice: values.generalPrice,
+          ironingDiscount: values.ironingDiscount,
+        });
+      }
+    }
+
+    postMutation.mutate(
+      { generalPrices: newEditedGeneralPrices, garmentsWithPrice: editedRows },
+      {
+        onSuccess: (result: any) => {
+          setDialogConfig({
+            open: true,
+            message: t("success_update_record"),
+            onClose: () => {
+              setDialogConfig({ open: false });
+              setEditedRows([]);
+              setEditedGeneralPrices([]);
+              setEditedRows([]);
+              refetchPrices();
+            },
+          });
+        },
+        onError: (e: CTError) => {
+          setMutationError({
+            title: t("error_creting_record"),
+            message: t(getMessageFromError(e.error)),
+          });
+        },
+        onSettled: () => actions.setSubmitting(false),
+      }
+    );
   };
 
   const filteredRows = rows.filter((row) =>
@@ -122,14 +211,19 @@ const PricesModal: React.FC<PricesModalProps> = ({
         const newRows = generalPrices.garmentsWithPrice.map(
           (garmentWithPrice) => {
             const editedValue = editedRowsCurrency.find(
-              (editedRow) => editedRow.id == garmentWithPrice.id
+              (editedRow) =>
+                editedRow.currencyId == selectedCurency?.id &&
+                editedRow.id == garmentWithPrice.id
             );
             return editedValue ?? garmentWithPrice;
           }
         );
         setRows(newRows);
       } else {
-        setRows(generalPrices.garmentsWithPrice);
+        const formatGarmentPrices = generalPrices.garmentsWithPrice.map(
+          (garmentPrice) => ({ ...garmentPrice, id: garmentPrice.id ?? uuid() })
+        );
+        setRows(formatGarmentPrices);
       }
     }
   }, [generalPrices]);
@@ -159,7 +253,7 @@ const PricesModal: React.FC<PricesModalProps> = ({
           <GridCloseIcon />
         </IconButton>
         <DialogContent dividers>
-          <Formik initialValues={{ currencyId: null }} onSubmit={handleSubmit}>
+          <Formik initialValues={initialValues} onSubmit={handleSubmit}>
             {({
               values,
               isSubmitting,
@@ -171,11 +265,57 @@ const PricesModal: React.FC<PricesModalProps> = ({
               setFieldValue,
             }) => {
               // eslint-disable-next-line
-              //   useEffect(() => {
-              //     if (generalPrices.data) {
-              //       setValues(generalPrices.data);
-              //     }
-              //   }, [generalPrices.data]); // eslint-disable-line react-hooks/exhaustive-deps
+              useEffect(() => {
+                const generalPrice = editedGeneralPrices.find(
+                  (genPrice) => genPrice.currencyId == selectedCurency?.id
+                );
+                console.log(generalPrice);
+                if (generalPrice) {
+                  setValues({
+                    currencyId: generalPrice?.id ?? 0,
+                    generalPrice: generalPrice.generalPrice,
+                    ironingDiscount: generalPrice.ironingDiscount,
+                  });
+                } else {
+                  setValues({
+                    id: generalPrices?.generalPrice?.id,
+                    currencyId: selectedCurency?.id ?? 0,
+                    generalPrice:
+                      generalPrices?.generalPrice?.generalPrice ?? 0,
+                    ironingDiscount:
+                      generalPrices?.generalPrice?.ironingDiscount ?? 0,
+                  });
+                }
+              }, [generalPrices]); // eslint-disable-line react-hooks/exhaustive-deps
+
+              const handleChangeCurrency = (
+                event: any,
+                newValue: any | null
+              ) => {
+                setSelectedCurency(newValue);
+                const newEditedGeneralPrices = editedGeneralPrices;
+                if (values.generalPrice || values.ironingDiscount) {
+                  const index = newEditedGeneralPrices.findIndex(
+                    (genPrice) => genPrice.currencyId == selectedCurency?.id
+                  );
+                  if (index != -1) {
+                    newEditedGeneralPrices[index].generalPrice =
+                      values.generalPrice;
+                    newEditedGeneralPrices[index].ironingDiscount =
+                      values.ironingDiscount;
+                  } else {
+                    newEditedGeneralPrices.push({
+                      id: values.id,
+                      currencyId: selectedCurency?.id ?? 0,
+                      generalPrice: values.generalPrice,
+                      ironingDiscount: values.ironingDiscount,
+                    });
+                  }
+                  setEditedGeneralPrices(newEditedGeneralPrices);
+                }
+              };
+
+              if (!generalPrices) return null;
 
               return (
                 <>
@@ -197,9 +337,7 @@ const PricesModal: React.FC<PricesModalProps> = ({
                           options={currencies ?? []}
                           getOptionLabel={(option) => (option as Currency).code}
                           value={selectedCurency}
-                          onChange={(_: any, newValue: any | null) => {
-                            setSelectedCurency(newValue);
-                          }}
+                          onChange={handleChangeCurrency}
                           renderInput={(params) => (
                             <MuiTextField
                               {...params}
@@ -218,9 +356,9 @@ const PricesModal: React.FC<PricesModalProps> = ({
                             <Field
                               fullWidth
                               autocomplete="off"
-                              component={TextField}
+                              component={NumericField}
                               variant="standard"
-                              name={"general_price"}
+                              name={"generalPrice"}
                               label={t("general_price")}
                             />
                           </Grid>
@@ -228,9 +366,9 @@ const PricesModal: React.FC<PricesModalProps> = ({
                             <Field
                               fullWidth
                               autocomplete="off"
-                              component={TextField}
+                              component={NumericField}
                               variant="standard"
-                              name={"ironing_discount"}
+                              name={"ironingDiscount"}
                               label={t("ironing_discount")}
                             />
                           </Grid>
@@ -266,6 +404,31 @@ const PricesModal: React.FC<PricesModalProps> = ({
                       </Box>
                     )}
                   </Form>
+                  <Backdrop
+                    open={isSubmitting || isLoadingPrices}
+                    sx={{
+                      zIndex: (theme) => theme.zIndex.drawer + 1,
+                      color: "#fff",
+                    }}
+                  >
+                    <CircularProgress />
+                  </Backdrop>
+
+                  <Dialog
+                    open={dialogConfig.open}
+                    keepMounted
+                    onClose={dialogConfig.onClose}
+                  >
+                    <DialogTitle>{dialogConfig.title}</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        {dialogConfig.message}
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={dialogConfig.onClose}>{t("ok")}</Button>
+                    </DialogActions>
+                  </Dialog>
                 </>
               );
             }}

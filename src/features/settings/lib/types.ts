@@ -16,17 +16,23 @@ export enum PriceType {
 }
 
 export type GarmentWithPrice = {
-  id: number;
+  id?: number | string;
   name: string;
   type: PriceType;
   price: number;
   currencyId: number;
   edited?: boolean;
+  garmentId: number;
 };
 
 export type GeneralPriceForm = {
-  curencyId: number;
-  generalPrice: number;
-  ironingDiscount: number;
+  generalPrices: GeneralPriceType[];
   garmentsWithPrice: GarmentWithPrice[];
+};
+
+export type GeneralPriceType = {
+  id?: number;
+  currencyId: number | null;
+  generalPrice: number | null;
+  ironingDiscount: number | null;
 };
