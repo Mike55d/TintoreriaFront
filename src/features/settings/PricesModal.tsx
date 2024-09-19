@@ -142,6 +142,8 @@ const PricesModal: React.FC<PricesModalProps> = ({
   };
 
   const handleDialogClose = () => {
+    setEditedRows([]);
+    setEditedGeneralPrices([]);
     setDialogOpen(false);
   };
 
@@ -178,7 +180,6 @@ const PricesModal: React.FC<PricesModalProps> = ({
               setDialogConfig({ open: false });
               setEditedRows([]);
               setEditedGeneralPrices([]);
-              setEditedRows([]);
               refetchPrices();
             },
           });
@@ -215,7 +216,12 @@ const PricesModal: React.FC<PricesModalProps> = ({
                 editedRow.currencyId == selectedCurency?.id &&
                 editedRow.id == garmentWithPrice.id
             );
-            return editedValue ?? garmentWithPrice;
+            return (
+              editedValue ?? {
+                ...garmentWithPrice,
+                id: garmentWithPrice.id ?? uuid(),
+              }
+            );
           }
         );
         setRows(newRows);
@@ -226,12 +232,7 @@ const PricesModal: React.FC<PricesModalProps> = ({
         setRows(formatGarmentPrices);
       }
     }
-  }, [generalPrices]);
-
-  // useEffect(() => {
-  //   console.log(selectedCurency);
-  // }, [selectedCurency]);
-
+  }, [generalPrices, editedRows]);
   return (
     <>
       <Dialog
@@ -269,7 +270,6 @@ const PricesModal: React.FC<PricesModalProps> = ({
                 const generalPrice = editedGeneralPrices.find(
                   (genPrice) => genPrice.currencyId == selectedCurency?.id
                 );
-                console.log(generalPrice);
                 if (generalPrice) {
                   setValues({
                     currencyId: generalPrice?.id ?? 0,
