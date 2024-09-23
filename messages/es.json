@@ -65,5 +65,8 @@
   "edit": "Editar",
   "search": "Buscar",
   "preferred_currency":"Divisa preferida",
-  "total":"Total"
+  "total":"Total",
+  "delete_record": "Borrar registro",
+  "question_delete_this_record": "¿Está seguro de borrar este registro? Esta operación no se puede revertir",
+  "success_delete_record": "El registro se borró exitosamente"
 }

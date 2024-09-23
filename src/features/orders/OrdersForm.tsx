@@ -325,7 +325,7 @@ const OrdersForm = () => {
                         open: true,
                         message: t("success_delete_record"),
                         onClose: () => {
-                          router.replace("/users");
+                          router.replace("/orders");
                         },
                       });
                     },
