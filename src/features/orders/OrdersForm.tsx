@@ -1,4 +1,13 @@
-import { Field, FieldProps, Form, Formik, FormikHelpers } from "formik";
+import {
+  Field,
+  FieldProps,
+  Form,
+  Formik,
+  FormikFormProps,
+  FormikHelpers,
+  FormikProps,
+  useFormikContext,
+} from "formik";
 import { useMutation, useQueryClient } from "react-query";
 import { useRouter } from "next/router";
 import { CTError, getMessageFromError, SimpleError } from "@/utils/errors";
@@ -41,7 +50,6 @@ import useGarments from "../settings/lib/hooks/useGarments";
 import { Garment } from "../settings/lib/api";
 import useGeneralPrices from "../settings/lib/hooks/useGeneralPrices";
 import { PriceType } from "../settings/lib/types";
-import { GarmentOrderType } from "./lib/types";
 import CloseIcon from "@mui/icons-material/Close";
 
 const useStyles = makeStyles({
@@ -56,6 +64,52 @@ const useStyles = makeStyles({
   },
 });
 
+const PriceField = (props: FieldProps) => {
+  const { values, setFieldValue } = useFormikContext<Order>();
+
+  return (
+    <TextField
+      {...props}
+      type="number"
+      onChange={(e) => {
+        props.field.onChange(e);
+        const fieldTotal = `${props.field.name.split(".")[0]}.total`;
+        const index = props.field.name.substring(
+          props.field.name.indexOf("[") + 1,
+          props.field.name.lastIndexOf("]")
+        );
+        const quantity = values.garments[parseInt(index)].quantity;
+        const price = parseInt(e.target.value);
+        const total = quantity * (price ?? 0);
+        setFieldValue(fieldTotal, total);
+      }}
+    />
+  );
+};
+
+const QuantityField = (props: FieldProps) => {
+  const { values, setFieldValue } = useFormikContext<Order>();
+
+  return (
+    <TextField
+      {...props}
+      type="number"
+      onChange={(e) => {
+        props.field.onChange(e);
+        const fieldTotal = `${props.field.name.split(".")[0]}.total`;
+        const index = props.field.name.substring(
+          props.field.name.indexOf("[") + 1,
+          props.field.name.lastIndexOf("]")
+        );
+        const quantity = parseInt(e.target.value);
+        const price = values.garments[parseInt(index)].price;
+        const total = quantity * (price ?? 0);
+        setFieldValue(fieldTotal, total);
+      }}
+    />
+  );
+};
+
 const OrdersForm = () => {
   const t = useTranslations();
   const queryClient = useQueryClient();
@@ -63,7 +117,6 @@ const OrdersForm = () => {
   const { id } = router.query;
   const classes = useStyles();
   const { data: currencies } = useCurrencies();
-  const { data: generalPrices } = useGeneralPrices();
   const { data: garments } = useGarments();
   const orderQuery = useOrder(id ? parseInt(id as string) : undefined);
   const [mutationError, setMutationError] = useState(null as SimpleError);
@@ -96,29 +149,35 @@ const OrdersForm = () => {
     Order.delete(u)
   );
   const handleSubmit = (values: Order, actions: FormikHelpers<Order>) => {
-    // console.log(values);
+    const formatGarments = values.garments.filter(
+      (garment) => garment.garment && garment.quantity > 0
+    );
+    // console.log(formatGarments);
     // actions.setSubmitting(false);
     // return;
     setMutationError(null);
     if (!values.id) {
-      postMutation.mutate(values, {
-        onSuccess: (result: Order) => {
-          setDialogConfig({
-            open: true,
-            message: t("success_create_record"),
-            onClose: () => {
-              router.replace(`/orders/${result.id}`);
-            },
-          });
-        },
-        onError: (e: CTError) => {
-          setMutationError({
-            title: t("error_creting_record"),
-            message: t(getMessageFromError(e.error)),
-          });
-        },
-        onSettled: () => actions.setSubmitting(false),
-      });
+      postMutation.mutate(
+        { ...values, garments: formatGarments },
+        {
+          onSuccess: (result: Order) => {
+            setDialogConfig({
+              open: true,
+              message: t("success_create_record"),
+              onClose: () => {
+                router.replace(`/orders/${result.id}`);
+              },
+            });
+          },
+          onError: (e: CTError) => {
+            setMutationError({
+              title: t("error_creting_record"),
+              message: t(getMessageFromError(e.error)),
+            });
+          },
+          onSettled: () => actions.setSubmitting(false),
+        }
+      );
     } else {
       patchMutation.mutate(values, {
         onSuccess: () => {
@@ -161,6 +220,21 @@ const OrdersForm = () => {
           touched,
           errors,
         }) => {
+          const { data: generalPrices } = useGeneralPrices(
+            values.currencyId ?? 0
+          );
+
+          // eslint-disable-next-line
+          useEffect(() => {
+            if (orderQuery.isFetched && orderQuery.data && !values.id) {
+              setValues({ ...orderQuery.data });
+            }
+          }, [orderQuery.data, orderQuery.isFetched]); // eslint-disable-line react-hooks/exhaustive-deps
+
+          useEffect(() => {
+            console.log(errors);
+          }, [errors]);
+
           const currenciesFormat = useMemo(() => {
             return currencies?.map((currency) => ({
               text: currency.name,
@@ -168,22 +242,58 @@ const OrdersForm = () => {
             }));
           }, [currencies]);
 
-          useEffect(() => {
-            console.log(errors);
-          },[errors])
+          const getPrice = (garment: Garment): number | null => {
+            if (!garment) return null;
+            const priceCurrency = generalPrices?.garmentsWithPrice.find(
+              (garmentWithPrice) =>
+                garmentWithPrice.currencyId == values.currencyId &&
+                garmentWithPrice.garmentId == garment.id
+            );
 
-          // eslint-disable-next-line
-          useEffect(() => {
-            console.log(values);
-            if (orderQuery.isFetched && orderQuery.data) {
-              setValues({ ...orderQuery.data });
+            if (priceCurrency) {
+              if (priceCurrency.type == PriceType.PERCENT) {
+                if (
+                  generalPrices?.generalPrice.generalPrice &&
+                  priceCurrency.price
+                ) {
+                  return (
+                    (generalPrices?.generalPrice.generalPrice *
+                      priceCurrency.price) /
+                    100
+                  );
+                } else {
+                  return generalPrices?.generalPrice.generalPrice ?? 0;
+                }
+              } else {
+                return priceCurrency.price ?? 0;
+              }
+            } else {
+              return generalPrices?.generalPrice.generalPrice ?? 0;
             }
-          }, [orderQuery.data, orderQuery.isFetched]); // eslint-disable-line react-hooks/exhaustive-deps
+          };
+
+          const handleChangeGarment = (newValue: Garment | null, i: number) => {
+            if (!newValue) return;
+            const newGarment = [...values.garments];
+            const price = getPrice(newValue);
+            newGarment[i].garment = newValue;
+            newGarment[i].price = price;
+            const quantity = values.garments[i].quantity;
+            newGarment[i].total = quantity * (price ?? 0);
+
+            console.log(newValue);
+            setValues({
+              ...values,
+              garments: newGarment,
+            });
+          };
 
           const handleAddField = () => {
             let newField: any = {
               ironingOnly: false,
               quantity: 1,
+              price: "",
+              total: "",
             };
             values.garments.push(newField);
             setValues(values);
@@ -232,27 +342,7 @@ const OrdersForm = () => {
             });
           };
 
-          const getPrice = (garment: GarmentOrderType) => {
-            if (!garment.garment) return "";
-            const priceCurrency = garment.garment?.prices?.find(
-              (price) => price.currency?.id == values.currencyId
-            );
-            if (priceCurrency) {
-              if (priceCurrency.type == PriceType.PERCENT) {
-                if (generalPrices?.general_price && priceCurrency.price) {
-                  return (
-                    (generalPrices?.general_price * priceCurrency.price) / 100
-                  );
-                } else {
-                  return generalPrices?.general_price;
-                }
-              } else {
-                return priceCurrency.price;
-              }
-            } else {
-              return generalPrices?.general_price;
-            }
-          };
+          if (!generalPrices) return null;
 
           return (
             <Form autoComplete="new-user">
@@ -273,10 +363,13 @@ const OrdersForm = () => {
                       />
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="h6">{t("garments")}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
                       <Stack direction={"row"} spacing={1}>
+                        <Typography
+                          variant="h6"
+                          style={{ display: "inline-block" }}
+                        >
+                          {t("garments")}
+                        </Typography>
                         <IconButton
                           aria-label="delete"
                           size="small"
@@ -303,15 +396,9 @@ const OrdersForm = () => {
                                   (option as Garment).name
                                 }
                                 value={values.garments[i].garment}
-                                onChange={(_: any, newValue: any | null) => {
-                                  const newGarment = [...values.garments];
-                                  newGarment[i].garment = newValue;
-                                  console.log(newGarment);
-                                  setValues({
-                                    ...values,
-                                    garments: newGarment,
-                                  });
-                                }}
+                                onChange={(_: any, newValue: Garment | null) =>
+                                  handleChangeGarment(newValue, i)
+                                }
                                 renderInput={(params) => (
                                   <MUITextField
                                     {...params}
@@ -328,27 +415,35 @@ const OrdersForm = () => {
                                 {/* {!!touched["alertTitle"] && errors["alertTitle"]} */}
                               </FormHelperText>
                             </Grid>
-                            <Grid item xs={12} sm={2}>
+                            <Grid item xs={12} sm={1}>
                               <Field
                                 fullWidth
                                 autocomplete="off"
-                                component={TextField}
+                                component={QuantityField}
                                 variant="standard"
                                 name={`garments[${i}].quantity`}
                                 label={t("quantity")}
                               />
                             </Grid>
-                            <Grid item xs={12} sm={3}>
-                              <MUITextField
-                                value={getPrice(garment)}
-                                disabled
-                                type="number"
+                            <Grid item xs={12} sm={2}>
+                              <Field
+                                fullWidth
+                                autoComplete="off"
+                                component={PriceField}
                                 variant="standard"
-                                label={`${t("price")} ${
-                                  currencies?.find(
-                                    (curency) => curency.id == values.currencyId
-                                  )?.sign
-                                }`}
+                                name={`garments[${i}].price`}
+                                label={t("price")}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                              <Field
+                                fullWidth
+                                disabled
+                                autoComplete="off"
+                                component={TextField}
+                                variant="standard"
+                                name={`garments[${i}].total`}
+                                label={t("total")}
                               />
                             </Grid>
                             <Grid item xs={12} sm={3}>

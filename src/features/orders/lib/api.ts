@@ -48,6 +48,8 @@ export default class Order {
       quantity: garment.quantity,
       ironingOnly: garment.ironingOnly,
       garmentId: garment.garment.id,
+      price: garment.price,
+      total: garment.total,
     }));
     const { data } = await networkClient.post(`${baseUrl}`, {
       ...record,
@@ -62,6 +64,8 @@ export default class Order {
       quantity: garment.quantity,
       ironingOnly: garment.ironingOnly,
       garmentId: garment.garment.id,
+      price: garment.price,
+      total: garment.total,
     }));
     const { data } = await networkClient.patch(`${baseUrl}/${record.id}`, {
       ...record,

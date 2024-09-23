@@ -11,14 +11,14 @@ const baseUrl = "api/garments";
 const baseUrlCurrencies = "api/currencies";
 
 export class Garment {
-  id?: string | null;
+  id?: number | null;
   name: string;
-  prices: Price[];
+  // prices: Price[];
 
   constructor() {
     this.id = null;
     this.name = "";
-    this.prices = [];
+    // this.prices = [];
   }
 
   static async fetchAll() {

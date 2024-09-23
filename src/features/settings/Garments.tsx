@@ -43,10 +43,12 @@ const Garments = () => {
   const [snackbarText, setSnackbarText] = useState("");
   const [snackbarType, setSnackbarType] = useState<AlertColor>("success");
   const garments = useGarments();
-  const currencies = useCurrencies();
 
   const mutationOptions = {
-    onSuccess: () => queryClient.invalidateQueries("garments"),
+    onSuccess: () => {
+      queryClient.invalidateQueries("garments");
+      queryClient.invalidateQueries("generalPrices");
+    },
   };
 
   const handleGarmentClick = (garment: Garment) => {
@@ -112,12 +114,12 @@ const Garments = () => {
     values: Garment,
     actions: FormikHelpers<Garment>
   ) => {
-    values.prices = values.prices
-      .filter((price) => price.price && price.type)
-      .map((price) => ({
-        ...price,
-        type: parseInt(price.type as string),
-      }));
+    // values.prices = values.prices
+    //   .filter((price) => price.price && price.type)
+    //   .map((price) => ({
+    //     ...price,
+    //     type: parseInt(price.type as string),
+    //   }));
     if (!values.id) {
       postMutation.mutate(values, {
         onSuccess: (result: Garment) => {
@@ -204,20 +206,7 @@ const Garments = () => {
                 resetForm();
               } else {
                 if (currentRecord) {
-                  const prices = currencies.data?.map((currency) => {
-                    const price = currentRecord?.prices.find(
-                      (price) => price.currency?.id == currency.id
-                    );
-                    return price
-                      ? { ...price, currencyId: currency.id as number }
-                      : {
-                          currency,
-                          currencyId: currency.id as number,
-                          price: undefined,
-                          type: 1,
-                        };
-                  });
-                  setValues({ ...currentRecord, prices: prices ?? [] });
+                  setValues(currentRecord);
                 }
               }
             }, [dialogOpen]); // eslint-disable-line react-hooks/exhaustive-deps

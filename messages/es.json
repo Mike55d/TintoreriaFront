@@ -64,5 +64,6 @@
   "prices": "Precios",
   "edit": "Editar",
   "search": "Buscar",
-  "preferred_currency":"Divisa preferida"
+  "preferred_currency":"Divisa preferida",
+  "total":"Total"
 }
