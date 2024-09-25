@@ -22,7 +22,7 @@ const DateField = (props: FieldProps & { label: string }) => {
       value={props.field.value}
       renderInput={params => <TextFieldDate variant="standard" {...params} />}
       className={classes.datePickers}
-      onChange={value => props.form.setFieldValue(props.field.name, value['$d'])}
+      onChange={value => props.form.setFieldValue(props.field.name, value ? value['$d'] : null)}
       label={props.label}
     />
   );

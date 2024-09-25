@@ -670,7 +670,7 @@ const OrdersForm = () => {
                   </Grid>
 
                   <Grid item xs={12} display="flex" justifyContent={"flex-end"}>
-                    {orderQuery.data && orderQuery.data?.status != 4 && (
+                    {orderQuery.data && orderQuery.data?.status != 5 && (
                       <Button
                         color="error"
                         onClick={() => handleChangeStatus(5)}
@@ -701,7 +701,7 @@ const OrdersForm = () => {
                         </Button>
                       </Grid>
                     )}
-                    {orderQuery.data && orderQuery.data?.status == 2 && (
+                    {orderQuery.data && orderQuery.data?.status == 2 || orderQuery.data?.status == 3  && (
                       <Grid item ml={1}>
                         <Button
                           variant="contained"

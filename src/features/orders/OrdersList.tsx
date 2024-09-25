@@ -13,29 +13,38 @@ const SerialCellComponent = (col: any) => {
 
 const StatusCellComponent = (col: any) => {
   const t = useTranslations();
+
   const status = [
     {
       id: Status.RECEIVED,
       text: t("received"),
     },
     {
-      id: Status.PROCESING,
+      id: Status.PROCESSING,
       text: t("processing"),
     },
     {
-      id: Status.READY,
-      text: t("ready"),
+      id: Status.LATE,
+      text: t("late"),
+    },
+    {
+      id: Status.DELIVERED,
+      text: t("delivered"),
+    },
+    {
+      id: Status.CANCELED,
+      text: t("canceled"),
     },
   ];
 
-  return <td>{status[col.row.status].text}</td>;
+  return <td>{status.find((status) => status.id == col.row.status)?.text}</td>;
 };
 
 const DateCell = (col: any) => {
   return (
     <td>
-      {col.row.created_at
-        ? format(new Date(col.row.created_at), "dd/MM/yyyy")
+      {col.row[col.field]
+        ? format(new Date(col.row[col.field]), "DD/MM/YYYY")
         : ""}
     </td>
   );
@@ -70,8 +79,14 @@ const OrdersList = () => {
       renderCell: SerialCellComponent,
     },
     {
-      field: "date",
+      field: "created_at",
       headerName: t("date") as string,
+      width: 150,
+      renderCell: DateCell,
+    },
+    {
+      field: "endDate",
+      headerName: t("end_date_order") as string,
       width: 150,
       renderCell: DateCell,
     },
