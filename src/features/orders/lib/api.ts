@@ -1,5 +1,5 @@
 import networkClient from "@/networkClient";
-import { GarmentOrderType } from "./types";
+import { GarmentOrderType, History } from "./types";
 import { GetClientsParams } from "@/features/clients/lib/types";
 import { Currency, Garment } from "@/features/settings/lib/api";
 
@@ -12,6 +12,7 @@ export default class Order {
   currencyId?: number;
   status: number;
   garments: GarmentOrderType[];
+  historyEntries?: History[];
 
   constructor() {
     this.id = null;
@@ -19,6 +20,7 @@ export default class Order {
     this.currencyId = 1;
     this.status = 0;
     this.garments = [];
+    this.historyEntries = [];
   }
 
   static fromServer(data: Order[]) {

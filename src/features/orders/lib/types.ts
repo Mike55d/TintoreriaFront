@@ -10,7 +10,20 @@ export type GarmentOrderType = {
 };
 
 export enum Status {
-  RECEIVED,
-  PROCESING,
-  READY,
+  RECEIVED = 1,
+  PROCESSING,
+  LATE,
+  DELIVERED,
+  CANCELED,
 }
+
+export enum PayType {
+  DEBIT,
+  CREDIT,
+  CASH,
+}
+
+export type History = {
+  id: number;
+  status: number;
+};

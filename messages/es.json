@@ -64,9 +64,12 @@
   "prices": "Precios",
   "edit": "Editar",
   "search": "Buscar",
-  "preferred_currency":"Divisa preferida",
-  "total":"Total",
+  "preferred_currency": "Divisa preferida",
+  "total": "Total",
   "delete_record": "Borrar registro",
   "question_delete_this_record": "¿Está seguro de borrar este registro? Esta operación no se puede revertir",
-  "success_delete_record": "El registro se borró exitosamente"
+  "success_delete_record": "El registro se borró exitosamente",
+  "late": "Con retraso",
+  "delivered": "Entregado",
+  "canceled": "Cancelado"
 }

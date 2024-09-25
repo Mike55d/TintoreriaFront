@@ -36,6 +36,10 @@ import {
   Autocomplete,
   Chip,
   FormHelperText,
+  Stepper,
+  Step,
+  StepLabel,
+  Box,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { TextField, Checkbox } from "formik-mui";
@@ -51,6 +55,15 @@ import { Garment } from "../settings/lib/api";
 import useGeneralPrices from "../settings/lib/hooks/useGeneralPrices";
 import { PriceType } from "../settings/lib/types";
 import CloseIcon from "@mui/icons-material/Close";
+import {
+  Cancel,
+  CheckCircleOutline,
+  HourglassEmpty,
+  LocalShipping,
+  Warning,
+} from "@mui/icons-material";
+import LoopIcon from "@mui/icons-material/Loop";
+import { Status } from "./lib/types";
 
 const useStyles = makeStyles({
   column: {
@@ -148,6 +161,73 @@ const OrdersForm = () => {
   const deleteMutation = useMutation<void, CTError, Order>((u) =>
     Order.delete(u)
   );
+
+  const steps = [
+    {
+      id: 1,
+      label: t("received"),
+      Icon: CheckCircleOutline,
+      activeColor: "#86D293",
+      active: true,
+    },
+    {
+      id: 2,
+      label: t("processing"),
+      Icon: LoopIcon,
+      activeColor: "#86D293",
+      active: false,
+    },
+    {
+      id: 3,
+      label: t("late"),
+      Icon: Warning,
+      activeColor: "#FFEAC5",
+      active: false,
+    },
+    {
+      id: 4,
+      label: t("delivered"),
+      Icon: LocalShipping,
+      activeColor: "#86D293",
+      active: false,
+    },
+  ];
+
+  const formatSteps = useMemo(() => {
+    let allSteps = steps;
+    const isLate = orderQuery.data?.historyEntries?.find(
+      (history) => history.status == Status.LATE
+    );
+    if (!isLate) {
+      allSteps = allSteps.filter((step) => step.id != Status.LATE);
+    } else {
+      allSteps = allSteps.map((step) =>
+        step.id == Status.LATE ? { ...step, active: true } : step
+      );
+    }
+    const isCanceled = orderQuery.data?.historyEntries?.find(
+      (history) => history.status == Status.CANCELED
+    );
+    let newSteps = allSteps.map((step) => {
+      const existStep = orderQuery.data?.historyEntries?.find(
+        (history) => history.status == step.id
+      );
+      return existStep ? { ...step, active: true } : step;
+    });
+    if (isCanceled) {
+      newSteps = newSteps.filter((step) => step.active);
+      newSteps.push({
+        id: 5,
+        label: t("canceled"),
+        Icon: Cancel,
+        activeColor: "#F05A7E",
+        active: true,
+      });
+    }
+    console.log(newSteps);
+    return newSteps;
+  }, [orderQuery.data]);
+
   const handleSubmit = (values: Order, actions: FormikHelpers<Order>) => {
     const formatGarments = values.garments.filter(
       (garment) => garment.garment && garment.quantity > 0
@@ -473,12 +553,47 @@ const OrdersForm = () => {
                         );
                       })}
                     </Grid>
+                    <Box sx={{ width: "100%" }} mt={3} mb={2}>
+                      <Stepper>
+                        {formatSteps?.map((step, index) => {
+                          if (!step) return null;
+                          const { label, Icon, active, activeColor } = step;
+                          return (
+                            <Step key={index}>
+                              <StepLabel
+                                StepIconComponent={() => (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      backgroundColor: "#F5F7F8",
+                                      padding: 10,
+                                      borderRadius: 30,
+                                    }}
+                                  >
+                                    <Icon
+                                      fontSize="large"
+                                      style={{
+                                        color: active ? activeColor : "grey",
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              >
+                                {label}
+                              </StepLabel>
+                            </Step>
+                          );
+                        })}
+                      </Stepper>
+                    </Box>
                   </Grid>
 
                   <Grid item xs={12} display="flex" justifyContent={"flex-end"}>
-                    <Button color="error" onClick={handleDeleteRecord}>
+                    {/* <Button color="error" onClick={handleDeleteRecord}>
                       {t("delete")}
-                    </Button>
+                    </Button> */}
                     <Grid item ml={1}>
                       <Button
                         variant="contained"
