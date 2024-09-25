@@ -79,4 +79,12 @@ export default class Order {
   static async delete(record: any) {
     await networkClient.delete(`${baseUrl}/${record.id}`);
   }
+
+  static async changeStatus(id: number, statusId: number) {
+    const { data } = await networkClient.patch(
+      `${baseUrl}/changeStatus/${id}`,
+      { statusId }
+    );
+    return data;
+  }
 }

@@ -145,11 +145,21 @@ const OrdersForm = () => {
   });
 
   const mutationOptions = {
-    onSuccess: () => queryClient.invalidateQueries("users"),
+    onSuccess: () => queryClient.invalidateQueries(["order", id]),
   };
 
   const postMutation = useMutation<Order, CTError, Order>(
     (u: Order) => Order.create(u),
+    mutationOptions
+  );
+
+  const changeStatusMutation = useMutation<
+    Order,
+    CTError,
+    { id: number; statusId: number }
+  >(
+    (u: { id: number; statusId: number }) =>
+      Order.changeStatus(u.id, u.statusId),
     mutationOptions
   );
 
@@ -227,6 +237,30 @@ const OrdersForm = () => {
     console.log(newSteps);
     return newSteps;
   }, [orderQuery.data]);
+
+  const handleChangeStatus = (statusId: number) => {
+    changeStatusMutation.mutate(
+      { id: id ? parseInt(id as string) : 0, statusId },
+      {
+        onSuccess: () => {
+          setDialogConfig({
+            open: true,
+            message: t("success_update_record"),
+            onClose: () => {
+              setDialogConfig({ open: false });
+              orderQuery.refetch();
+            },
+          });
+        },
+        onError: (e: CTError) => {
+          setMutationError({
+            title: t("error_updating_record"),
+            message: t(getMessageFromError(e.error)),
+          });
+        },
+      }
+    );
+  };
 
   const handleSubmit = (values: Order, actions: FormikHelpers<Order>) => {
     const formatGarments = values.garments.filter(
@@ -591,12 +625,16 @@ const OrdersForm = () => {
                   </Grid>
 
                   <Grid item xs={12} display="flex" justifyContent={"flex-end"}>
-                    {/* <Button color="error" onClick={handleDeleteRecord}>
-                      {t("delete")}
-                    </Button> */}
+                    {orderQuery.data && orderQuery.data?.status != 4 && (
+                      <Button
+                        color="error"
+                        onClick={() => handleChangeStatus(5)}
+                      >
+                        {t("cancel")}
+                      </Button>
+                    )}
                     <Grid item ml={1}>
                       <Button
-                        variant="contained"
                         color="primary"
                         onClick={() => {
                           submitForm();
@@ -605,6 +643,32 @@ const OrdersForm = () => {
                         {t(id ? "update" : "create")}
                       </Button>
                     </Grid>
+                    {orderQuery.data && orderQuery.data?.status < 2 && (
+                      <Grid item ml={1}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => {
+                            handleChangeStatus(2);
+                          }}
+                        >
+                          {t("process")}
+                        </Button>
+                      </Grid>
+                    )}
+                    {orderQuery.data && orderQuery.data?.status == 2 && (
+                      <Grid item ml={1}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => {
+                            handleChangeStatus(4);
+                          }}
+                        >
+                          {t("deliver")}
+                        </Button>
+                      </Grid>
+                    )}
                   </Grid>
 
                   <Grid

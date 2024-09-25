@@ -71,5 +71,7 @@
   "success_delete_record": "El registro se borró exitosamente",
   "late": "Con retraso",
   "delivered": "Entregado",
-  "canceled": "Cancelado"
+  "canceled": "Cancelado",
+  "process": "Procesar",
+  "deliver": "Entregar"
 }
