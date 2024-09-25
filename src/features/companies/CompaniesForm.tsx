@@ -2,7 +2,7 @@ import { Field, Form, Formik, FormikHelpers } from "formik";
 import { useMutation, useQueryClient } from "react-query";
 import { useRouter } from "next/router";
 import { CTError, getMessageFromError, SimpleError } from "@/utils/errors";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DialogConfig } from "@/utils/types";
 import { useTranslations } from "next-intl";
 import {
@@ -32,6 +32,8 @@ import * as yup from "yup";
 import useCompany from "./lib/hooks/useCompany";
 import { CountryType } from "../clients/lib/types";
 import Company from "./lib/api";
+import FormikSelectField from "@/components/formik-fields/FormikSelect";
+import useCurrencies from "../settings/lib/hooks/useCurrencies";
 
 const useStyles = makeStyles({
   column: {
@@ -52,6 +54,7 @@ const CompaniesForm = () => {
   const { id } = router.query;
   const classes = useStyles();
   const companyQuery = useCompany(id ? parseInt(id as string) : undefined);
+  const { data: currencies } = useCurrencies();
   const [countrySearch, setCountrySearch] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<CountryType | null>(
     null
@@ -100,7 +103,6 @@ const CompaniesForm = () => {
   };
 
   const handleSubmit = (values: Company, actions: FormikHelpers<Company>) => {
-    console.log(values);
     setMutationError(null);
     values.country = selectedCountry ? selectedCountry.alpha2 : null;
     if (!values.id) {
@@ -145,6 +147,13 @@ const CompaniesForm = () => {
     }
   };
 
+  const currenciesFormat = useMemo(() => {
+    return currencies?.map((currency) => ({
+      text: currency.name,
+      value: currency.id,
+    }));
+  }, [currencies]);
+
   if (id && !companyQuery.data) return null;
 
   return (
@@ -176,6 +185,10 @@ const CompaniesForm = () => {
               }
             }
           }, [companyQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+          useEffect(()=> {
+            console.log(values);
+          },[values])
 
           const handleDeleteRecord = () => {
             setDeleteDialogConfig({
@@ -272,6 +285,16 @@ const CompaniesForm = () => {
                         variant="standard"
                         name="personEmail"
                         label={t("personEmail")}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormikSelectField
+                        label={t("preferred_currency")}
+                        variant="standard"
+                        name="currencyId"
+                        id="currencyId"
+                        hideDefault
+                        values={currenciesFormat}
                       />
                     </Grid>
                     <Grid item xs={6}>

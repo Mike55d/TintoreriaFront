@@ -12,6 +12,7 @@ export default class Company {
   personName: string;
   personEmail: string;
   country: string | null;
+  currencyId: number | string;
 
   constructor() {
     this.id = null;
@@ -22,6 +23,7 @@ export default class Company {
     this.personName = "";
     this.personEmail = "";
     this.country = "";
+    this.currencyId = 0;
   }
 
   static async fetchAll(params?: GetClientsParams) {

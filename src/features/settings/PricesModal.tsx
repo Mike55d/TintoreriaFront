@@ -35,6 +35,7 @@ import { CTError, getMessageFromError, SimpleError } from "@/utils/errors";
 import { DialogConfig } from "@/utils/types";
 import { v4 as uuid } from "uuid";
 import useSettings from "./lib/hooks/useSettings";
+import * as yup from "yup";
 
 type PricesModalProps = {
   dialogOpen: boolean;
@@ -73,6 +74,10 @@ const PricesModal: React.FC<PricesModalProps> = ({
   const mutationOptions = {
     onSuccess: () => queryClient.invalidateQueries("generalPrices"),
   };
+
+  const validationSchema = yup.object().shape({
+    ironingDiscount: yup.number().max(100, t("ironing_discount_max_error")),
+  });
 
   const columns: GridColDef[] = [
     { field: "garmentId", headerName: t("id"), width: 150 },
@@ -206,12 +211,13 @@ const PricesModal: React.FC<PricesModalProps> = ({
     );
   };
 
-  const filteredRows = rows.filter((row) =>
-    Object.values(row).some(
-      (value) =>
-        typeof value === "string" &&
-        value.toLowerCase().includes(searchText.toLowerCase())
-    )
+  const filteredRows = rows.filter(
+    (row) =>
+      Object.values(row).some(
+        (value) =>
+          typeof value === "string" &&
+          value.toLowerCase().includes(searchText.toLowerCase())
+      ) || row.garmentId == parseInt(searchText)
   );
 
   useEffect(() => {
@@ -265,7 +271,11 @@ const PricesModal: React.FC<PricesModalProps> = ({
           <GridCloseIcon />
         </IconButton>
         <DialogContent dividers>
-          <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
             {({
               values,
               isSubmitting,
