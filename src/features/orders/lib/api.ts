@@ -2,6 +2,7 @@ import networkClient from "@/networkClient";
 import { GarmentOrderType, History } from "./types";
 import { GetClientsParams } from "@/features/clients/lib/types";
 import { Currency, Garment } from "@/features/settings/lib/api";
+import { format } from "date-fns";
 
 const baseUrl = "api/orders";
 
@@ -13,6 +14,8 @@ export default class Order {
   status: number;
   garments: GarmentOrderType[];
   historyEntries?: History[];
+  endDate?: Date;
+  payType: number;
 
   constructor() {
     this.id = null;
@@ -21,6 +24,7 @@ export default class Order {
     this.status = 0;
     this.garments = [];
     this.historyEntries = [];
+    this.payType = 0;
   }
 
   static fromServer(data: Order[]) {
@@ -55,6 +59,9 @@ export default class Order {
     }));
     const { data } = await networkClient.post(`${baseUrl}`, {
       ...record,
+      endDate: record.endDate
+        ? format(record.endDate, "DD/MM/YYYY")
+        : undefined,
       garments: newGarments,
     });
     return data;
@@ -71,6 +78,9 @@ export default class Order {
     }));
     const { data } = await networkClient.patch(`${baseUrl}/${record.id}`, {
       ...record,
+      endDate: record.endDate
+        ? format(record.endDate, "YYYY/MM/DD")
+        : undefined,
       garments: newGarments,
     });
     return data;

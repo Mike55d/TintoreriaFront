@@ -64,6 +64,8 @@ import {
 } from "@mui/icons-material";
 import LoopIcon from "@mui/icons-material/Loop";
 import { Status } from "./lib/types";
+import DateField from "@/components/formik-fields/FormikDatePicker";
+import { format } from "date-fns";
 
 const useStyles = makeStyles({
   column: {
@@ -76,6 +78,12 @@ const useStyles = makeStyles({
     marginTop: 10,
   },
 });
+export enum PayType {
+  UNPAID,
+  DEBIT,
+  CREDIT,
+  CASH,
+}
 
 const PriceField = (props: FieldProps) => {
   const { values, setFieldValue } = useFormikContext<Order>();
@@ -172,6 +180,21 @@ const OrdersForm = () => {
     Order.delete(u)
   );
 
+  const payStatus = [
+    {
+      text: t("unpaid"),
+    },
+    {
+      text: t("debit"),
+    },
+    {
+      text: t("credit"),
+    },
+    {
+      text: t("cash"),
+    },
+  ];
+
   const steps = [
     {
       id: 1,
@@ -266,7 +289,6 @@ const OrdersForm = () => {
     const formatGarments = values.garments.filter(
       (garment) => garment.garment && garment.quantity > 0
     );
-    // console.log(formatGarments);
     // actions.setSubmitting(false);
     // return;
     setMutationError(null);
@@ -463,10 +485,24 @@ const OrdersForm = () => {
               <Container maxWidth="lg" fixed>
                 <Grid container spacing={2} paddingRight={2} paddingBottom={2}>
                   <Grid container mt={2} component={Paper} p={2} spacing={2}>
-                    <Grid item xs={12} className={classes.title}>
+                    <Grid item xs={12} sm={10} className={classes.title}>
                       <Typography variant="h6">{t("order")}</Typography>
                     </Grid>
-                    <Grid item xs={12} sm={12}>
+                    <Grid item xs={12} sm={2}>
+                      <Typography
+                        variant="h6"
+                        textAlign="end"
+                        style={{
+                          color:
+                            orderQuery.data?.payType == 0
+                              ? "#D91656"
+                              : "#86D293",
+                        }}
+                      >
+                        {payStatus[orderQuery.data?.payType ?? 0].text}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
                       <FormikSelectField
                         label={t("currency")}
                         variant="standard"
@@ -476,6 +512,50 @@ const OrdersForm = () => {
                         values={currenciesFormat}
                       />
                     </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Field
+                        fullWidth
+                        component={DateField}
+                        variant="standard"
+                        name="endDate"
+                        label={t("end_date_order")}
+                      />
+                    </Grid>
+                    <Box sx={{ width: "100%" }} mt={3} mb={2}>
+                      <Stepper>
+                        {formatSteps?.map((step, index) => {
+                          if (!step) return null;
+                          const { label, Icon, active, activeColor } = step;
+                          return (
+                            <Step key={index}>
+                              <StepLabel
+                                StepIconComponent={() => (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      backgroundColor: "#F5F7F8",
+                                      padding: 10,
+                                      borderRadius: 30,
+                                    }}
+                                  >
+                                    <Icon
+                                      fontSize="large"
+                                      style={{
+                                        color: active ? activeColor : "grey",
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              >
+                                {label}
+                              </StepLabel>
+                            </Step>
+                          );
+                        })}
+                      </Stepper>
+                    </Box>
                     <Grid item xs={12}>
                       <Stack direction={"row"} spacing={1}>
                         <Typography
@@ -587,41 +667,6 @@ const OrdersForm = () => {
                         );
                       })}
                     </Grid>
-                    <Box sx={{ width: "100%" }} mt={3} mb={2}>
-                      <Stepper>
-                        {formatSteps?.map((step, index) => {
-                          if (!step) return null;
-                          const { label, Icon, active, activeColor } = step;
-                          return (
-                            <Step key={index}>
-                              <StepLabel
-                                StepIconComponent={() => (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      alignItems: "center",
-                                      backgroundColor: "#F5F7F8",
-                                      padding: 10,
-                                      borderRadius: 30,
-                                    }}
-                                  >
-                                    <Icon
-                                      fontSize="large"
-                                      style={{
-                                        color: active ? activeColor : "grey",
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                              >
-                                {label}
-                              </StepLabel>
-                            </Step>
-                          );
-                        })}
-                      </Stepper>
-                    </Box>
                   </Grid>
 
                   <Grid item xs={12} display="flex" justifyContent={"flex-end"}>

@@ -18,6 +18,7 @@ export enum Status {
 }
 
 export enum PayType {
+  UNPAID,
   DEBIT,
   CREDIT,
   CASH,
