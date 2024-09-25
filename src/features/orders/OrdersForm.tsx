@@ -290,6 +290,8 @@ const OrdersForm = () => {
       (garment) => garment.garment && garment.quantity > 0
     );
     // actions.setSubmitting(false);
+    // console.log(values);
+    // console.log(formatGarments);
     // return;
     setMutationError(null);
     if (!values.id) {
@@ -488,20 +490,22 @@ const OrdersForm = () => {
                     <Grid item xs={12} sm={10} className={classes.title}>
                       <Typography variant="h6">{t("order")}</Typography>
                     </Grid>
-                    <Grid item xs={12} sm={2}>
-                      <Typography
-                        variant="h6"
-                        textAlign="end"
-                        style={{
-                          color:
-                            orderQuery.data?.payType == 0
-                              ? "#D91656"
-                              : "#86D293",
-                        }}
-                      >
-                        {payStatus[orderQuery.data?.payType ?? 0].text}
-                      </Typography>
-                    </Grid>
+                    {!!id && (
+                      <Grid item xs={12} sm={2}>
+                        <Typography
+                          variant="h6"
+                          textAlign="end"
+                          style={{
+                            color:
+                              orderQuery.data?.payType == 0
+                                ? "#D91656"
+                                : "#86D293",
+                          }}
+                        >
+                          {payStatus[orderQuery.data?.payType ?? 0].text}
+                        </Typography>
+                      </Grid>
+                    )}
                     <Grid item xs={12} sm={6}>
                       <FormikSelectField
                         label={t("currency")}
@@ -521,41 +525,44 @@ const OrdersForm = () => {
                         label={t("end_date_order")}
                       />
                     </Grid>
-                    <Box sx={{ width: "100%" }} mt={3} mb={2}>
-                      <Stepper>
-                        {formatSteps?.map((step, index) => {
-                          if (!step) return null;
-                          const { label, Icon, active, activeColor } = step;
-                          return (
-                            <Step key={index}>
-                              <StepLabel
-                                StepIconComponent={() => (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      alignItems: "center",
-                                      backgroundColor: "#F5F7F8",
-                                      padding: 10,
-                                      borderRadius: 30,
-                                    }}
-                                  >
-                                    <Icon
-                                      fontSize="large"
+                    {!!id && (
+                      <Box sx={{ width: "100%" }} mt={3} mb={2}>
+                        <Stepper>
+                          {formatSteps?.map((step, index) => {
+                            if (!step) return null;
+                            const { label, Icon, active, activeColor } = step;
+                            return (
+                              <Step key={index}>
+                                <StepLabel
+                                  StepIconComponent={() => (
+                                    <div
                                       style={{
-                                        color: active ? activeColor : "grey",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        backgroundColor: "#F5F7F8",
+                                        padding: 10,
+                                        borderRadius: 30,
                                       }}
-                                    />
-                                  </div>
-                                )}
-                              >
-                                {label}
-                              </StepLabel>
-                            </Step>
-                          );
-                        })}
-                      </Stepper>
-                    </Box>
+                                    >
+                                      <Icon
+                                        fontSize="large"
+                                        style={{
+                                          color: active ? activeColor : "grey",
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                >
+                                  {label}
+                                </StepLabel>
+                              </Step>
+                            );
+                          })}
+                        </Stepper>
+                      </Box>
+                    )}
+
                     <Grid item xs={12}>
                       <Stack direction={"row"} spacing={1}>
                         <Typography
@@ -670,14 +677,16 @@ const OrdersForm = () => {
                   </Grid>
 
                   <Grid item xs={12} display="flex" justifyContent={"flex-end"}>
-                    {orderQuery.data && orderQuery.data?.status != 5 && (
-                      <Button
-                        color="error"
-                        onClick={() => handleChangeStatus(5)}
-                      >
-                        {t("cancel")}
-                      </Button>
-                    )}
+                    {orderQuery.data &&
+                      orderQuery.data?.status != 5 &&
+                      orderQuery.data?.status != 4 && (
+                        <Button
+                          color="error"
+                          onClick={() => handleChangeStatus(5)}
+                        >
+                          {t("cancel")}
+                        </Button>
+                      )}
                     <Grid item ml={1}>
                       <Button
                         color="primary"
@@ -688,7 +697,7 @@ const OrdersForm = () => {
                         {t(id ? "update" : "create")}
                       </Button>
                     </Grid>
-                    {orderQuery.data && orderQuery.data?.status < 2 && (
+                    {!!id && orderQuery.data && orderQuery.data?.status < 2 && (
                       <Grid item ml={1}>
                         <Button
                           variant="contained"
@@ -701,19 +710,21 @@ const OrdersForm = () => {
                         </Button>
                       </Grid>
                     )}
-                    {orderQuery.data && orderQuery.data?.status == 2 || orderQuery.data?.status == 3  && (
-                      <Grid item ml={1}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => {
-                            handleChangeStatus(4);
-                          }}
-                        >
-                          {t("deliver")}
-                        </Button>
-                      </Grid>
-                    )}
+                    {orderQuery.data &&
+                      (orderQuery.data?.status == 2 ||
+                        orderQuery.data?.status == 3) && (
+                        <Grid item ml={1}>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                              handleChangeStatus(4);
+                            }}
+                          >
+                            {t("deliver")}
+                          </Button>
+                        </Grid>
+                      )}
                   </Grid>
 
                   <Grid

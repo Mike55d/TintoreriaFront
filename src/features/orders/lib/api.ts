@@ -14,7 +14,7 @@ export default class Order {
   status: number;
   garments: GarmentOrderType[];
   historyEntries?: History[];
-  endDate?: Date;
+  endDate?: Date | null;
   payType: number;
 
   constructor() {
@@ -25,6 +25,7 @@ export default class Order {
     this.garments = [];
     this.historyEntries = [];
     this.payType = 0;
+    this.endDate = null;
   }
 
   static fromServer(data: Order[]) {
@@ -60,7 +61,7 @@ export default class Order {
     const { data } = await networkClient.post(`${baseUrl}`, {
       ...record,
       endDate: record.endDate
-        ? format(record.endDate, "DD/MM/YYYY")
+        ? format(record.endDate, "YYYY/MM/DD")
         : undefined,
       garments: newGarments,
     });
