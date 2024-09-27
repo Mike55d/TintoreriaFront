@@ -3,29 +3,30 @@ import { GarmentOrderType, History } from "./types";
 import { GetClientsParams } from "@/features/clients/lib/types";
 import { Currency, Garment } from "@/features/settings/lib/api";
 import { format } from "date-fns";
+import Client from "@/features/clients/lib/api";
 
 const baseUrl = "api/orders";
 
 export default class Order {
   id?: string | null;
   created_at: Date;
-  currency?: Currency;
-  currencyId?: number;
+  currency?: Currency | null;
   status: number;
   garments: GarmentOrderType[];
   historyEntries?: History[];
   endDate?: Date | null;
   payType: number;
+  client?: Client;
 
   constructor() {
     this.id = null;
     this.created_at = new Date();
-    this.currencyId = 1;
     this.status = 0;
     this.garments = [];
     this.historyEntries = [];
     this.payType = 0;
     this.endDate = null;
+    this.currency = null
   }
 
   static fromServer(data: Order[]) {
@@ -64,6 +65,7 @@ export default class Order {
         ? format(record.endDate, "YYYY/MM/DD")
         : undefined,
       garments: newGarments,
+      clientId: record.client?.id,
     });
     return data;
   }
@@ -83,6 +85,7 @@ export default class Order {
         ? format(record.endDate, "YYYY/MM/DD")
         : undefined,
       garments: newGarments,
+      clientId: record.client?.id,
     });
     return data;
   }

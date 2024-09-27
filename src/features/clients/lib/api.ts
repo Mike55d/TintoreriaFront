@@ -13,7 +13,7 @@ export default class Client {
   country: string | null;
   postalCode: string;
   rfc: string;
-  companies: Company[];
+  company?: Company | null;
 
   constructor() {
     this.id = null;
@@ -24,10 +24,10 @@ export default class Client {
     this.country = "";
     this.postalCode = "";
     this.rfc = "";
-    this.companies = [];
+    this.company = null;
   }
 
-  static async fetchAll(params: GetClientsParams) {
+  static async fetchAll(params?: GetClientsParams) {
     const { data } = await networkClient.get(baseUrl, {}, params);
     return data;
   }
@@ -43,7 +43,7 @@ export default class Client {
   static async create(record: Client) {
     const { data } = await networkClient.post(`${baseUrl}`, {
       ...record,
-      companies: record.companies.map((companie) => companie.id),
+      companyId: record.company?.id,
     });
     return data;
   }
@@ -51,7 +51,7 @@ export default class Client {
   static async update(record: Client) {
     const { data } = await networkClient.patch(`${baseUrl}/${record.id}`, {
       ...record,
-      companies: record.companies.map((companie) => companie.id),
+      companyId: record.company?.id,
     });
     return data;
   }

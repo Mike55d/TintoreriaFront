@@ -74,7 +74,7 @@ const CLientsForm = () => {
     email: yup.string().max(64).email().required(t("required_field")),
     postalCode: yup.string().max(64).required(t("required_field")),
     rfc: yup.string().max(2000).required(t("required_field")),
-    companies:yup.array().nullable()
+    company: yup.object().nullable(),
   });
 
   const mutationOptions = {
@@ -274,19 +274,18 @@ const CLientsForm = () => {
                         isOptionEqualToValue={(option: any, value: any) =>
                           option.id == value.id
                         }
-                        multiple
                         disablePortal
                         fullWidth
                         options={companies?.data ?? []}
                         getOptionLabel={(option) => option.name}
-                        value={values.companies}
+                        value={values.company}
                         onChange={(_: any, newValue: any | null) => {
-                          setValues({ ...values, companies: newValue });
+                          setValues({ ...values, company: newValue });
                         }}
                         renderInput={(params) => (
                           <MUITextField
                             {...params}
-                            label={t("companies")}
+                            label={t("company")}
                             variant="standard"
                           />
                         )}

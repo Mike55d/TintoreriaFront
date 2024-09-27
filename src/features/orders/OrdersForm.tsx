@@ -55,9 +55,13 @@ import useCurrencies from "../settings/lib/hooks/useCurrencies";
 import Order from "./lib/api";
 import ControlPointIcon from "@mui/icons-material/ControlPoint";
 import useGarments from "../settings/lib/hooks/useGarments";
-import { Garment } from "../settings/lib/api";
+import { Currency, Garment } from "../settings/lib/api";
 import useGeneralPrices from "../settings/lib/hooks/useGeneralPrices";
-import { PriceType } from "../settings/lib/types";
+import {
+  GarmentWithPrice,
+  GeneralPriceType,
+  PriceType,
+} from "../settings/lib/types";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Cancel,
@@ -70,6 +74,7 @@ import LoopIcon from "@mui/icons-material/Loop";
 import { Status } from "./lib/types";
 import DateField from "@/components/formik-fields/FormikDatePicker";
 import { format } from "date-fns";
+import { useClients } from "../clients/lib/hooks/useClients";
 
 const useStyles = makeStyles({
   column: {
@@ -143,6 +148,7 @@ const OrdersForm = () => {
   const classes = useStyles();
   const { data: currencies } = useCurrencies();
   const { data: garments } = useGarments();
+  const { data: clients } = useClients();
   const orderQuery = useOrder(id ? parseInt(id as string) : undefined);
   const [mutationError, setMutationError] = useState(null as SimpleError);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -150,6 +156,8 @@ const OrdersForm = () => {
   const [dialogConfig, setDialogConfig] = useState({
     open: false,
   } as DialogConfig);
+  const [ordersPriceEdited, setOrdersPriceEdited] = useState<Order[]>([]);
+
   const [deleteDialogConfig, setDeleteDialogConfig] = useState({
     open: false,
   } as DialogConfig);
@@ -410,11 +418,12 @@ const OrdersForm = () => {
           submitForm,
           setValues,
           setSubmitting,
+          setFieldValue,
           touched,
           errors,
         }) => {
           const { data: generalPrices } = useGeneralPrices(
-            values.currencyId ?? 0
+            values.currency?.id ?? 0
           );
 
           // eslint-disable-next-line
@@ -428,18 +437,23 @@ const OrdersForm = () => {
             console.log(errors);
           }, [errors]);
 
-          const currenciesFormat = useMemo(() => {
-            return currencies?.map((currency) => ({
-              text: currency.name,
-              value: currency.id,
-            }));
-          }, [currencies]);
+          const handleChangeCurrency = (event: any, newValue: any | null) => {
+            setFieldValue("currency", newValue);
+            const orders = [...ordersPriceEdited];
+            const indexOrderEdited = ordersPriceEdited.findIndex(
+              (order) => order.currency?.id == values.currency?.id
+            );
+            if (indexOrderEdited != -1) {
+              orders[indexOrderEdited] = values;
+            }
+            setOrdersPriceEdited([...orders, values]);
+          };
 
           const getPrice = (garment: Garment): number | null => {
             if (!garment) return null;
             const priceCurrency = generalPrices?.garmentsWithPrice.find(
               (garmentWithPrice) =>
-                garmentWithPrice.currencyId == values.currencyId &&
+                garmentWithPrice.currencyId == values.currency?.id &&
                 garmentWithPrice.garmentId == garment.id
             );
 
@@ -466,20 +480,27 @@ const OrdersForm = () => {
           };
 
           useEffect(() => {
-            if (values.currencyId != orderQuery.data?.currencyId) {
-              const oldGarments = [...values.garments];
-              const newGarments = oldGarments.map((garment) => {
-                const price = generalPrices?.garmentsWithPrice.find(
-                  (garmentWithPrice) =>
-                    garmentWithPrice.garmentId == garment.garment.id
-                )?.price;
-                const total = garment.quantity * (price ?? 0);
-                return { ...garment, price: price ?? 0, total };
-              });
-              setValues({ ...values, garments: newGarments });
+            const editedOrder = ordersPriceEdited.find(
+              (orderPrice) => orderPrice.currency?.id == values.currency?.id
+            );
+            if (editedOrder) {
+              setValues(editedOrder);
             } else {
-              if (orderQuery.data) {
-                setValues({ ...orderQuery.data });
+              if (values.currency?.id != orderQuery.data?.currency?.id) {
+                const oldGarments = [...values.garments];
+                const newGarments = oldGarments.map((garment) => {
+                  const price = generalPrices?.garmentsWithPrice.find(
+                    (garmentWithPrice) =>
+                      garmentWithPrice.garmentId == garment.garment.id
+                  )?.price;
+                  const total = garment.quantity * (price ?? 0);
+                  return { ...garment, price: price ?? 0, total };
+                });
+                setValues({ ...values, garments: newGarments });
+              } else {
+                if (orderQuery.data) {
+                  setValues({ ...orderQuery.data });
+                }
               }
             }
           }, [generalPrices, orderQuery.data]);
@@ -612,18 +633,52 @@ const OrdersForm = () => {
                         </Stepper>
                       </Box>
                     )}
-
-                    <Grid item xs={12} sm={6}>
-                      <FormikSelectField
-                        label={t("currency")}
-                        variant="standard"
-                        name="currencyId"
-                        id="currencyId"
-                        hideDefault
-                        values={currenciesFormat}
+                    <Grid item xs={12} sm={4}>
+                      <Autocomplete
+                        isOptionEqualToValue={(option: any, value: any) =>
+                          option.id == value.id
+                        }
+                        disablePortal
+                        fullWidth
+                        options={clients?.data ?? []}
+                        getOptionLabel={(option) => option.name}
+                        value={values.client}
+                        onChange={(_: any, newValue: any | null) => {
+                          setValues({ ...values, client: newValue });
+                        }}
+                        renderInput={(params) => (
+                          <MUITextField
+                            {...params}
+                            label={t("client")}
+                            variant="standard"
+                          />
+                        )}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={4}>
+                      <Autocomplete
+                        isOptionEqualToValue={(option: any, value: any) =>
+                          option.id == value.id
+                        }
+                        disablePortal
+                        fullWidth
+                        options={currencies ?? []}
+                        getOptionLabel={(option) => option.code}
+                        value={values.currency}
+                        onChange={handleChangeCurrency}
+                        renderInput={(params) => (
+                          <MUITextField
+                            {...params}
+                            label={t("currency")}
+                            variant="standard"
+                          />
+                        )}
+                      />
+                      {/* <FormHelperText sx={{ color: "red" }}>
+                          {!!touched["alertTitle"] && errors["alertTitle"]}
+                        </FormHelperText> */}
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
                       <Field
                         fullWidth
                         component={DateField}
