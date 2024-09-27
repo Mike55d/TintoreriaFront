@@ -16,7 +16,7 @@ export default class Order {
   historyEntries?: History[];
   endDate?: Date | null;
   payType: number;
-  client?: Client;
+  client?: Client | null;
 
   constructor() {
     this.id = null;
@@ -26,7 +26,7 @@ export default class Order {
     this.historyEntries = [];
     this.payType = 0;
     this.endDate = null;
-    this.currency = null
+    this.currency = null;
   }
 
   static fromServer(data: Order[]) {
@@ -66,6 +66,7 @@ export default class Order {
         : undefined,
       garments: newGarments,
       clientId: record.client?.id,
+      currencyId: record.currency?.id,
     });
     return data;
   }
@@ -86,6 +87,7 @@ export default class Order {
         : undefined,
       garments: newGarments,
       clientId: record.client?.id,
+      currencyId: record.currency?.id,
     });
     return data;
   }

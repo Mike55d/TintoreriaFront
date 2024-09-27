@@ -75,6 +75,7 @@ import { Status } from "./lib/types";
 import DateField from "@/components/formik-fields/FormikDatePicker";
 import { format } from "date-fns";
 import { useClients } from "../clients/lib/hooks/useClients";
+import Client from "../clients/lib/api";
 
 const useStyles = makeStyles({
   column: {
@@ -163,7 +164,7 @@ const OrdersForm = () => {
   } as DialogConfig);
 
   const validationSchema = yup.object().shape({
-    currencyId: yup.string().required(t("required_field")),
+    currency: yup.object().required(t("required_field")),
   });
 
   const mutationOptions = {
@@ -643,8 +644,14 @@ const OrdersForm = () => {
                         options={clients?.data ?? []}
                         getOptionLabel={(option) => option.name}
                         value={values.client}
-                        onChange={(_: any, newValue: any | null) => {
-                          setValues({ ...values, client: newValue });
+                        onChange={(_: any, newValue: Client | null) => {
+                          setValues({
+                            ...values,
+                            client: newValue,
+                            currency: id
+                              ? values.currency
+                              : newValue?.company?.currency ?? null,
+                          });
                         }}
                         renderInput={(params) => (
                           <MUITextField
@@ -824,14 +831,16 @@ const OrdersForm = () => {
                           </Button>
                         </Grid>
                       )}
-                    <Grid item ml={1}>
-                      <Button
-                        color="primary"
-                        onClick={() => setShowPayDialog(true)}
-                      >
-                        {t("pay_method")}
-                      </Button>
-                    </Grid>
+                    {id && (
+                      <Grid item ml={1}>
+                        <Button
+                          color="primary"
+                          onClick={() => setShowPayDialog(true)}
+                        >
+                          {t("pay_method")}
+                        </Button>
+                      </Grid>
+                    )}
                     {!!id && orderQuery.data && orderQuery.data?.status < 2 && (
                       <Grid item ml={1}>
                         <Button

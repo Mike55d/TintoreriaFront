@@ -1,4 +1,5 @@
 import { GetClientsParams } from "@/features/clients/lib/types";
+import { Currency } from "@/features/settings/lib/api";
 import networkClient from "@/networkClient";
 
 const baseUrl = "api/company";
@@ -13,6 +14,7 @@ export default class Company {
   personEmail: string;
   country: string | null;
   currencyId: number | string;
+  currency?: Currency;
 
   constructor() {
     this.id = null;
