@@ -173,6 +173,7 @@ const OrdersForm = () => {
 
   const validationSchema = yup.object().shape({
     currency: yup.object().required(t("required_field")),
+    client: yup.object().required(t("required_field")),
   });
 
   const mutationOptions = {
@@ -228,6 +229,10 @@ const OrdersForm = () => {
   ];
 
   const payMethods = [
+    {
+      id: PayType.UNPAID,
+      text: t("none"),
+    },
     {
       id: PayType.DEBIT,
       text: t("debit"),
@@ -309,6 +314,7 @@ const OrdersForm = () => {
   }, [orderQuery.data]);
 
   const handleAddPayMethod = () => {
+    setShowPayDialog(false);
     AddPayMutation.mutate(
       { id: id ? parseInt(id as string) : 0, payId: payMethod },
       {
@@ -699,6 +705,9 @@ const OrdersForm = () => {
                           />
                         )}
                       />
+                      <FormHelperText sx={{ color: "red" }}>
+                        {!!touched["client"] && errors["client"]}
+                      </FormHelperText>
                     </Grid>
                     <Grid item xs={12} sm={4}>
                       <Autocomplete
@@ -719,9 +728,9 @@ const OrdersForm = () => {
                           />
                         )}
                       />
-                      {/* <FormHelperText sx={{ color: "red" }}>
-                          {!!touched["alertTitle"] && errors["alertTitle"]}
-                        </FormHelperText> */}
+                      <FormHelperText sx={{ color: "red" }}>
+                        {!!touched["currency"] && errors["currency"]}
+                      </FormHelperText>
                     </Grid>
                     <Grid item xs={12} sm={4}>
                       <Field
@@ -835,18 +844,6 @@ const OrdersForm = () => {
                                 }
                                 label={t("ironing_only")}
                               />
-
-                              {/* <FormControlLabel
-                                control={
-                                  <Field
-                                    component={Checkbox}
-                                    name={`garments[${i}].ironingOnly`}
-                                    type="checkbox"
-                                    label={t("ironing_only")}
-                                  />
-                                }
-                                label={t("ironing_only") as string}
-                              /> */}
                             </Grid>
                             <Grid item xs={12} sm={1}>
                               <IconButton
@@ -888,16 +885,18 @@ const OrdersForm = () => {
                           </Button>
                         </Grid>
                       )}
-                    {id && (
-                      <Grid item ml={1}>
-                        <Button
-                          color="primary"
-                          onClick={() => setShowPayDialog(true)}
-                        >
-                          {t("pay_method")}
-                        </Button>
-                      </Grid>
-                    )}
+                    {id &&
+                      orderQuery.data?.status == 4 &&
+                      orderQuery.data.payType == 0 && (
+                        <Grid item ml={1}>
+                          <Button
+                            color="primary"
+                            onClick={() => setShowPayDialog(true)}
+                          >
+                            {t("pay_method")}
+                          </Button>
+                        </Grid>
+                      )}
                     {!!id && orderQuery.data && orderQuery.data?.status < 2 && (
                       <Grid item ml={1}>
                         <Button
@@ -918,9 +917,7 @@ const OrdersForm = () => {
                           <Button
                             variant="contained"
                             color="primary"
-                            onClick={() => {
-                              handleChangeStatus(4);
-                            }}
+                            onClick={() => setShowPayDialog(true)}
                           >
                             {t("deliver")}
                           </Button>

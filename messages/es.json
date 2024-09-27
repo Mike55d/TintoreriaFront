@@ -84,5 +84,6 @@
   "brand": "Marca",
   "ironing_discount_max_error": "El descuento de solo planchado debe ser menor o igual a 100",
   "pay_method": "Método de pago",
-  "client": "Cliente"
+  "client": "Cliente",
+  "none": "Ninguno"
 }

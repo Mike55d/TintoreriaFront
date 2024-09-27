@@ -27,6 +27,7 @@ export default class Order {
     this.payType = 0;
     this.endDate = null;
     this.currency = null;
+    this.client = null;
   }
 
   static fromServer(data: Order[]) {
@@ -107,6 +108,7 @@ export default class Order {
   static async AddPay(id: number, payId: number) {
     const { data } = await networkClient.patch(`${baseUrl}/${id}`, {
       payType: payId,
+      statusId:4
     });
     return data;
   }
