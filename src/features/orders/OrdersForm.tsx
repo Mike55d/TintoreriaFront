@@ -518,10 +518,17 @@ const OrdersForm = () => {
             if (!newValue) return;
             const newGarments = [...values.garments];
             const price = getPrice(newValue);
+            const discount =
+              ((price ?? 0) *
+                (generalPrices?.generalPrice.ironingDiscount ?? 0)) /
+              100;
+            const formatPrice = newGarments[i].ironingOnly
+              ? (price ?? 0) - discount
+              : price;
             newGarments[i].garment = newValue;
             newGarments[i].price = price;
             const quantity = values.garments[i].quantity;
-            newGarments[i].total = quantity * (price ?? 0);
+            newGarments[i].total = quantity * (formatPrice ?? 0);
             setValues({
               ...values,
               garments: newGarments,
