@@ -40,6 +40,10 @@ import {
   Step,
   StepLabel,
   Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { TextField, Checkbox } from "formik-mui";
@@ -141,6 +145,8 @@ const OrdersForm = () => {
   const { data: garments } = useGarments();
   const orderQuery = useOrder(id ? parseInt(id as string) : undefined);
   const [mutationError, setMutationError] = useState(null as SimpleError);
+  const [showPayDialog, setShowPayDialog] = useState(false);
+  const [payMethod, setPayMethod] = useState<any>();
   const [dialogConfig, setDialogConfig] = useState({
     open: false,
   } as DialogConfig);
@@ -171,6 +177,15 @@ const OrdersForm = () => {
     mutationOptions
   );
 
+  const AddPayMutation = useMutation<
+    Order,
+    CTError,
+    { id: number; payId: number }
+  >(
+    (u: { id: number; payId: number }) => Order.AddPay(u.id, u.payId),
+    mutationOptions
+  );
+
   const patchMutation = useMutation<Order, CTError, Order>(
     (u: Order) => Order.update(u),
     mutationOptions
@@ -191,6 +206,21 @@ const OrdersForm = () => {
       text: t("credit"),
     },
     {
+      text: t("cash"),
+    },
+  ];
+
+  const payMethods = [
+    {
+      id: PayType.DEBIT,
+      text: t("debit"),
+    },
+    {
+      id: PayType.CREDIT,
+      text: t("credit"),
+    },
+    {
+      id: PayType.CASH,
       text: t("cash"),
     },
   ];
@@ -260,6 +290,31 @@ const OrdersForm = () => {
     console.log(newSteps);
     return newSteps;
   }, [orderQuery.data]);
+
+  const handleAddPayMethod = () => {
+    AddPayMutation.mutate(
+      { id: id ? parseInt(id as string) : 0, payId: payMethod },
+      {
+        onSuccess: () => {
+          setDialogConfig({
+            open: true,
+            message: t("success_update_record"),
+            onClose: () => {
+              setDialogConfig({ open: false });
+              orderQuery.refetch();
+              setShowPayDialog(false);
+            },
+          });
+        },
+        onError: (e: CTError) => {
+          setMutationError({
+            title: t("error_updating_record"),
+            message: t(getMessageFromError(e.error)),
+          });
+        },
+      }
+    );
+  };
 
   const handleChangeStatus = (statusId: number) => {
     changeStatusMutation.mutate(
@@ -367,7 +422,7 @@ const OrdersForm = () => {
             if (orderQuery.isFetched && orderQuery.data && !values.id) {
               setValues({ ...orderQuery.data });
             }
-          }, [orderQuery.data, orderQuery.isFetched]); // eslint-disable-line react-hooks/exhaustive-deps
+          }, [orderQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
           useEffect(() => {
             console.log(errors);
@@ -410,19 +465,36 @@ const OrdersForm = () => {
             }
           };
 
+          useEffect(() => {
+            if (values.currencyId != orderQuery.data?.currencyId) {
+              const oldGarments = [...values.garments];
+              const newGarments = oldGarments.map((garment) => {
+                const price = generalPrices?.garmentsWithPrice.find(
+                  (garmentWithPrice) =>
+                    garmentWithPrice.garmentId == garment.garment.id
+                )?.price;
+                const total = garment.quantity * (price ?? 0);
+                return { ...garment, price: price ?? 0, total };
+              });
+              setValues({ ...values, garments: newGarments });
+            } else {
+              if (orderQuery.data) {
+                setValues({ ...orderQuery.data });
+              }
+            }
+          }, [generalPrices, orderQuery.data]);
+
           const handleChangeGarment = (newValue: Garment | null, i: number) => {
             if (!newValue) return;
-            const newGarment = [...values.garments];
+            const newGarments = [...values.garments];
             const price = getPrice(newValue);
-            newGarment[i].garment = newValue;
-            newGarment[i].price = price;
+            newGarments[i].garment = newValue;
+            newGarments[i].price = price;
             const quantity = values.garments[i].quantity;
-            newGarment[i].total = quantity * (price ?? 0);
-
-            console.log(newValue);
+            newGarments[i].total = quantity * (price ?? 0);
             setValues({
               ...values,
-              garments: newGarment,
+              garments: newGarments,
             });
           };
 
@@ -488,43 +560,21 @@ const OrdersForm = () => {
                 <Grid container spacing={2} paddingRight={2} paddingBottom={2}>
                   <Grid container mt={2} component={Paper} p={2} spacing={2}>
                     <Grid item xs={12} sm={10} className={classes.title}>
-                      <Typography variant="h6">{t("order")}</Typography>
+                      <Typography variant="h6">
+                        {t("order")} #{orderQuery.data?.id}
+                      </Typography>
                     </Grid>
                     {!!id && (
                       <Grid item xs={12} sm={2}>
-                        <Typography
-                          variant="h6"
-                          textAlign="end"
-                          style={{
-                            color:
-                              orderQuery.data?.payType == 0
-                                ? "#D91656"
-                                : "#86D293",
-                          }}
+                        <Alert
+                          severity={
+                            orderQuery.data?.payType == 0 ? "error" : "success"
+                          }
                         >
                           {payStatus[orderQuery.data?.payType ?? 0].text}
-                        </Typography>
+                        </Alert>
                       </Grid>
                     )}
-                    <Grid item xs={12} sm={6}>
-                      <FormikSelectField
-                        label={t("currency")}
-                        variant="standard"
-                        name="currencyId"
-                        id="currencyId"
-                        hideDefault
-                        values={currenciesFormat}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Field
-                        fullWidth
-                        component={DateField}
-                        variant="standard"
-                        name="endDate"
-                        label={t("end_date_order")}
-                      />
-                    </Grid>
                     {!!id && (
                       <Box sx={{ width: "100%" }} mt={3} mb={2}>
                         <Stepper>
@@ -563,6 +613,25 @@ const OrdersForm = () => {
                       </Box>
                     )}
 
+                    <Grid item xs={12} sm={6}>
+                      <FormikSelectField
+                        label={t("currency")}
+                        variant="standard"
+                        name="currencyId"
+                        id="currencyId"
+                        hideDefault
+                        values={currenciesFormat}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Field
+                        fullWidth
+                        component={DateField}
+                        variant="standard"
+                        name="endDate"
+                        label={t("end_date_order")}
+                      />
+                    </Grid>
                     <Grid item xs={12}>
                       <Stack direction={"row"} spacing={1}>
                         <Typography
@@ -687,14 +756,25 @@ const OrdersForm = () => {
                           {t("cancel")}
                         </Button>
                       )}
+                    {orderQuery.data?.status != 4 &&
+                      orderQuery.data?.status != 5 && (
+                        <Grid item ml={1}>
+                          <Button
+                            color="primary"
+                            onClick={() => {
+                              submitForm();
+                            }}
+                          >
+                            {t(id ? "update" : "create")}
+                          </Button>
+                        </Grid>
+                      )}
                     <Grid item ml={1}>
                       <Button
                         color="primary"
-                        onClick={() => {
-                          submitForm();
-                        }}
+                        onClick={() => setShowPayDialog(true)}
                       >
-                        {t(id ? "update" : "create")}
+                        {t("pay_method")}
                       </Button>
                     </Grid>
                     {!!id && orderQuery.data && orderQuery.data?.status < 2 && (
@@ -795,6 +875,35 @@ const OrdersForm = () => {
           );
         }}
       </Formik>
+      <Dialog
+        open={showPayDialog}
+        keepMounted
+        onClose={() => setShowPayDialog(false)}
+      >
+        <DialogTitle>{t("pay_method")}</DialogTitle>
+        <DialogContent>
+          <Grid item sm={12} xs={12}>
+            <FormControl variant="standard" fullWidth>
+              <InputLabel id="payMethod">{t("pay_method")}</InputLabel>
+              <Select
+                labelId="payMethod"
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+              >
+                {payMethods.map((payMethod) => (
+                  <MenuItem value={payMethod.id} key={payMethod.id}>
+                    {payMethod.text}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPayDialog(false)}>{t("cancel")}</Button>
+          <Button onClick={handleAddPayMethod}>{t("save")}</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

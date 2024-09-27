@@ -98,4 +98,11 @@ export default class Order {
     );
     return data;
   }
+
+  static async AddPay(id: number, payId: number) {
+    const { data } = await networkClient.patch(`${baseUrl}/${id}`, {
+      payType: payId,
+    });
+    return data;
+  }
 }
