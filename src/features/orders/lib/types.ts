@@ -4,7 +4,7 @@ export type GarmentOrderType = {
   id?: number;
   quantity: number;
   price: number | null;
-  total: number | null;
+  total: number | string | null;
   ironingOnly: boolean;
   garment: Garment;
 };

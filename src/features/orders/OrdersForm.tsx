@@ -44,29 +44,24 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Checkbox,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { TextField, Checkbox } from "formik-mui";
+import { TextField } from "formik-mui";
 import DialogTitle from "@/components/dialog/DialogTitle";
 import * as yup from "yup";
 import { useOrder } from "./lib/hooks/useOrder";
-import FormikSelectField from "@/components/formik-fields/FormikSelect";
 import useCurrencies from "../settings/lib/hooks/useCurrencies";
 import Order from "./lib/api";
 import ControlPointIcon from "@mui/icons-material/ControlPoint";
 import useGarments from "../settings/lib/hooks/useGarments";
 import { Currency, Garment } from "../settings/lib/api";
 import useGeneralPrices from "../settings/lib/hooks/useGeneralPrices";
-import {
-  GarmentWithPrice,
-  GeneralPriceType,
-  PriceType,
-} from "../settings/lib/types";
+import { PriceType } from "../settings/lib/types";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Cancel,
   CheckCircleOutline,
-  HourglassEmpty,
   LocalShipping,
   Warning,
 } from "@mui/icons-material";
@@ -76,6 +71,7 @@ import DateField from "@/components/formik-fields/FormikDatePicker";
 import { format } from "date-fns";
 import { useClients } from "../clients/lib/hooks/useClients";
 import Client from "../clients/lib/api";
+import useSettings from "../settings/lib/hooks/useSettings";
 
 const useStyles = makeStyles({
   column: {
@@ -97,6 +93,7 @@ export enum PayType {
 
 const PriceField = (props: FieldProps) => {
   const { values, setFieldValue } = useFormikContext<Order>();
+  const { data: generalPrices } = useGeneralPrices(values.currency?.id ?? 0);
 
   return (
     <TextField
@@ -104,15 +101,20 @@ const PriceField = (props: FieldProps) => {
       type="number"
       onChange={(e) => {
         props.field.onChange(e);
-        const fieldTotal = `${props.field.name.split(".")[0]}.total`;
         const index = props.field.name.substring(
           props.field.name.indexOf("[") + 1,
           props.field.name.lastIndexOf("]")
         );
-        const quantity = values.garments[parseInt(index)].quantity;
+        const garment = values.garments[parseInt(index)];
+        const fieldTotal = `${props.field.name.split(".")[0]}.total`;
+
+        const quantity = garment.quantity;
         const price = parseInt(e.target.value);
-        const total = quantity * (price ?? 0);
-        setFieldValue(fieldTotal, total);
+        const discount =
+          (price * (generalPrices?.generalPrice.ironingDiscount ?? 0)) / 100;
+        const formatPrice = garment.ironingOnly ? price - discount : price;
+        const total = quantity * (formatPrice ?? 0);
+        setFieldValue(fieldTotal, total.toFixed(2));
       }}
     />
   );
@@ -120,6 +122,7 @@ const PriceField = (props: FieldProps) => {
 
 const QuantityField = (props: FieldProps) => {
   const { values, setFieldValue } = useFormikContext<Order>();
+  const { data: generalPrices } = useGeneralPrices(values.currency?.id ?? 0);
 
   return (
     <TextField
@@ -132,10 +135,14 @@ const QuantityField = (props: FieldProps) => {
           props.field.name.indexOf("[") + 1,
           props.field.name.lastIndexOf("]")
         );
+        const garment = values.garments[parseInt(index)];
         const quantity = parseInt(e.target.value);
-        const price = values.garments[parseInt(index)].price;
-        const total = quantity * (price ?? 0);
-        setFieldValue(fieldTotal, total);
+        const price = garment.price ?? 0;
+        const discount =
+          (price * (generalPrices?.generalPrice.ironingDiscount ?? 0)) / 100;
+        const formatPrice = garment.ironingOnly ? price - discount : price;
+        const total = quantity * (formatPrice ?? 0);
+        setFieldValue(fieldTotal, total.toFixed(2));
       }}
     />
   );
@@ -154,6 +161,7 @@ const OrdersForm = () => {
   const [mutationError, setMutationError] = useState(null as SimpleError);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payMethod, setPayMethod] = useState<any>();
+  const { data: settings } = useSettings();
   const [dialogConfig, setDialogConfig] = useState({
     open: false,
   } as DialogConfig);
@@ -520,6 +528,24 @@ const OrdersForm = () => {
             });
           };
 
+          const handleCheckIroningOnly = (isChecked: boolean, i: number) => {
+            const newGarments = [...values.garments];
+            const discount =
+              ((newGarments[i].price ?? 0) *
+                (generalPrices?.generalPrice.ironingDiscount ?? 0)) /
+              100;
+            const price = isChecked
+              ? (newGarments[i].price ?? 0) - discount
+              : newGarments[i].price;
+            const quantity = values.garments[i].quantity;
+            newGarments[i].ironingOnly = isChecked;
+            newGarments[i].total = (quantity * (price ?? 0)).toFixed(2);
+            setValues({
+              ...values,
+              garments: newGarments,
+            });
+          };
+
           const handleAddField = () => {
             let newField: any = {
               ironingOnly: false,
@@ -583,7 +609,8 @@ const OrdersForm = () => {
                   <Grid container mt={2} component={Paper} p={2} spacing={2}>
                     <Grid item xs={12} sm={10} className={classes.title}>
                       <Typography variant="h6">
-                        {t("order")} #{orderQuery.data?.id}
+                        {t("order")}{" "}
+                        {orderQuery.data?.id ? `# ${orderQuery.data?.id}` : ""}
                       </Typography>
                     </Grid>
                     {!!id && (
@@ -650,7 +677,11 @@ const OrdersForm = () => {
                             client: newValue,
                             currency: id
                               ? values.currency
-                              : newValue?.company?.currency ?? null,
+                              : newValue?.company?.currency ??
+                                currencies?.find(
+                                  (currency) =>
+                                    currency.id == settings?.currencyId
+                                ),
                           });
                         }}
                         renderInput={(params) => (
@@ -781,6 +812,25 @@ const OrdersForm = () => {
                             <Grid item xs={12} sm={3}>
                               <FormControlLabel
                                 control={
+                                  <Checkbox
+                                    checked={values.garments[i].ironingOnly}
+                                    onChange={(e: any) => {
+                                      // setFieldValue(
+                                      //   `garments[${i}].ironingOnly`,
+                                      //   e.target.checked
+                                      // );
+                                      handleCheckIroningOnly(
+                                        e.target.checked,
+                                        i
+                                      );
+                                    }}
+                                  />
+                                }
+                                label={t("ironing_only")}
+                              />
+
+                              {/* <FormControlLabel
+                                control={
                                   <Field
                                     component={Checkbox}
                                     name={`garments[${i}].ironingOnly`}
@@ -789,7 +839,7 @@ const OrdersForm = () => {
                                   />
                                 }
                                 label={t("ironing_only") as string}
-                              />
+                              /> */}
                             </Grid>
                             <Grid item xs={12} sm={1}>
                               <IconButton
