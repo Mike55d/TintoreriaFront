@@ -1,9 +1,9 @@
 // Config object to be passed to Msal on creation
 
 // productions values
-let clientId = 'e0d9c69e-afc0-46dc-afc5-dc6a17b08b63'; // REVISAR: process.env.AZURE_CLIENT_ID as string;
-let redirectUri = 'https://support.adv-ic.com/mscallback';
-let authority = 'https://login.microsoftonline.com/a49a4fb3-1433-4b30-8010-e08a3c6be97b/';
+let clientId = 'e0d9c69e-afc0'; // REVISAR: process.env.AZURE_CLIENT_ID as string;
+let redirectUri = 'https://webCallback.com/mscallback';
+let authority = 'https://login.microsoftonline.com/a49a4fb3-1433/';
 
 if (process.env.NODE_ENV !== 'production') {
   redirectUri = 'http://localhost:3000/mscallback';
